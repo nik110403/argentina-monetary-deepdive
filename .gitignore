@@ -1,0 +1,29 @@
+# Claude / agent tooling — never publish
+.claude/
+.mcp.json
+CLAUDE.md
+CLAUDE.local.md
+.claude-*
+
+# Secrets
+.Renviron
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Heavy / regenerable
+data-raw/
+**/*.rds
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# Local TLS cert (regenerable, see README)
+config/bcra_chain.pem
+
+# OS
+.DS_Store

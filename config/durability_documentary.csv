@@ -1,0 +1,22 @@
+metric,period,value,unit,source,source_ref,note
+gross_reserves,2024,16.6,USD bn,IMF CR 2026/105,"Table 1 Selected Economic & Financial Indicators, p50",Gross intl reserves; excl UST swap & unactivated PBoC swap; incl net Fund disbursements (fn 2)
+gross_reserves,2025,27.6,USD bn,IMF CR 2026/105,"Table 1 p50; Table 12 Indicators of Fund Credit, p63 (GIR 27552 USD mn)",End-2025 actual
+gross_reserves,2026,36.1,USD bn,IMF CR 2026/105,"Table 1 p50",2026 projection (second review)
+nir,2024,-2.4,USD bn,IMF CR 2026/105,"Table 1 / Table 2 BoP, p50-51",NIR at current rates (TMU def: gross net of swap lines/deposit insurance/FX-deposit reserve reqs/other; excl net Fund credit from 2025)
+nir,2025,-11.8,USD bn,IMF CR 2026/105,"Table 1 / Table 2, p50-51",End-2025 actual; end-2025 NIR QPC missed by large margin and waived (text p65: -11.7bn current rates)
+nir,2026,-1.8,USD bn,IMF CR 2026/105,"Table 1 p50",2026 projection; program target +US$8bn accumulation in 2026
+ara_fixed_pct,2025,37,percent,IMF CR 2026/105,"Table 2 p51 (in percent of ARA, fixed ER regime)",Gross reserves coverage; ~40% of ARA in narrative text p76
+pboc_swap,2025,5.1,USD bn,IMF CR 2026/105,"Table 2 Public Sector Debt 2023-25, line 4a BCRA FX liabilities, p68",Activated PBoC swap (unactivated US$13bn excluded from reserves)
+bis_swap,2025,2.5,USD bn,IMF CR 2026/105,"Table 2 Public Sector Debt, p68 (fn3); cf. fn8/fn21",BIS swap line — the replacement financing for the repaid UST draw (rolled counterparty); remains in the end-2025 reserve wedge; Fund books it inconsistently (in Table 2 debt stock, excluded from the DSA de-minimis box)
+bcra_repo,2025,3.0,USD bn,IMF CR 2026/105,"Table 2 Public Sector Debt, p68; text p68 (further US$3bn repo Jan 2026)",BCRA repo agreements
+ust_swap,2025,0.0,USD bn,IMF CR 2026/105 / CRS R48780,"Table 1 fn2 p50; CR 2026/105 fn8 & fn21; CRS R48780","US$20bn UST line: US$2.5bn drawn Oct-2025 then repaid Dec-2025 by SUBSTITUTING an equal BIS line — borrowing changed counterparty, did not leave the balance sheet; UST line itself excluded from gross & NIR"
+quasi_fiscal_cost_gdp,2024,1.6,percent,IMF CR 2026/105,"Table 1 (BCRA quasi-fiscal cost, percent of GDP), p50",Net interest income at current prices; corroborates fig13 unwind
+quasi_fiscal_cost_gdp,2025,-0.5,percent,IMF CR 2026/105,"Table 1 p50",Turned negative as remunerated-liability burden eliminated
+quasi_fiscal_cost_gdp,2026,-0.5,percent,IMF CR 2026/105,"Table 1 p50",2026 projection
+maturity_imf_2026,2026,1.1,USD bn,IMF CR 2026/105,"Table 2 BoP (IMF repurchases) p51; Table 12 p63 (SDR 833mn); Table 7 GFN IMF amort 1136 USD mn p58",IMF repurchases/amortization due 2026
+maturity_imf_2027,2027,4.4,USD bn,IMF CR 2026/105,"Table 7 GFN IMF amort 4439 USD mn p58; Table 2 BoP repurchases -4.3 p51; Table 12 SDR 3250mn",IMF repurchases/amortization due 2027 (Table 7 GFN figure; wall 2027 = 4.4 + 7.5 ~ US$12bn)
+maturity_imf_2028,2028,6.6,USD bn,IMF CR 2026/105,"Table 2 BoP p51; Table 12 (SDR 4842mn); Table 7 GFN (6612 USD mn)",IMF repurchases due 2028
+maturity_ext_2026,2026,7.5,USD bn,IMF CR 2026/105,"Table 7 Federal Govt Gross Financing Needs, External amortizations, p58",External non-IMF amortizations 2026 (official + private)
+maturity_ext_2027,2027,7.5,USD bn,IMF CR 2026/105,"Table 7 GFN, p58",External non-IMF amortizations 2027
+maturity_ext_2028,2028,8.0,USD bn,IMF CR 2026/105,"Table 7 GFN, p58",External non-IMF amortizations 2028
+imf_outstanding_stock_sdr_bn,2026,42.4,SDR bn,IMF CR 2026/105,"Table 12 Indicators of Fund Credit, p63 (42354.7 SDR mn)",Peak Fund-credit exposure 2026; 1329% of quota; 162% of GIR

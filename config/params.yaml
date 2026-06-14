@@ -1,0 +1,61 @@
+# Single source of truth for sample bounds, vintage, phases, and analysis settings.
+
+# Data vintage. Freeze raw downloads the day after the May 2026 CPI print lands,
+# then set vintage_locked: true and never re-run ingest without bumping this file.
+vintage_locked: true
+vintage_end: "2026-05-31"      # no observation after this date enters the panels
+sample_start: "2022-01-01"
+
+# Periodization. Defines the `phase` column in both panels.
+phases:
+  - {phase: 0, label: "Peronist baseline",   start: "2022-01-01", end: "2023-11-30"}
+  - {phase: 1, label: "Crawling peg",        start: "2023-12-01", end: "2025-03-31"}
+  - {phase: 2, label: "IMF crawling band",   start: "2025-04-01", end: "2025-12-31"}
+  - {phase: 3, label: "Inflation-indexed band", start: "2026-01-01", end: "2026-12-31"}
+
+# Crawl / band-edge depreciation schedule (% per month) used as the fig-2 overlay.
+# Phase 3 edges move at CPI(t-2); built in R from realized CPI.
+crawl_schedule:
+  - {start: "2024-01-01", end: "2025-01-31", rate: 2.0}
+  - {start: "2025-02-01", end: "2025-03-31", rate: 1.0}
+  - {start: "2025-04-01", end: "2025-12-31", rate: 1.0}   # band edge drift +/- 1%/month
+
+# BCRA projected money demand corridor for December 2026 (% of GDP),
+# from the January 2026 monetary program announcement. VERIFY against the
+# primary BCRA document during ingest.
+money_demand_corridor:
+  low: 4.2
+  high: 4.8
+
+# Money demand (Test 1)
+money_demand:
+  obstfeld_sample_end: "2025-12-31"   # replication window end (Obstfeld 2026); extension runs to vintage_end
+  recursive_min_obs: 18
+  rolling_window: 24
+
+# Inertia (Test 3 support) — descriptive only at this vintage
+inertia:
+  ar_max_lag: 4
+  rolling_window: 24
+  regime_break: "2026-01-01"
+  min_postbreak_obs_for_formal_test: 12   # pre-registered; runnable after Dec 2026 print
+
+# Local projections (pass-through)
+passthrough:
+  horizon: 6
+
+# Event study
+event_study:
+  window_pre: 10        # trading days
+  window_post: 10
+  baseline_pre: [30, 11]  # abnormal change measured vs mean of t-30..t-11
+  # Inference: the simple t-test (t = -47.70 on the midterms/EMBI cell) is not
+  # credible — serial correlation in daily levels collapses its standard error.
+  # Headline inference is a placebo distribution (the same abnormal-mean
+  # statistic recomputed on non-event trading days); the moving-block bootstrap
+  # gives the point estimate's SE; a Newey-West t is retained as a third column.
+  n_boot: 2000          # moving-block bootstrap replications (set.seed fixed)
+  block_len: 5          # block length (trading days) for the moving-block bootstrap
+  placebo_guard: 21     # exclude pseudo-event dates within +/- this many trading
+                        #   days of any real event from the placebo pool
+  boot_seed: 20260531   # fixed seed = vintage_end, for deterministic resampling

@@ -1,0 +1,14 @@
+date,slug,event,confirmed,event_study,source,note
+2023-12-10,inauguration,Milei inauguration,yes,no,Casa Rosada inaugural address transcript 10-12-2023,
+2023-12-12,caputo_deval,Caputo package and 118% step devaluation,yes,no,Ministry of Economy announcement 12-12-2023; implementing BCRA communication,
+2023-12-20,dnu70,DNU 70/2023,yes,no,"DNU 70/2023, Boletin Oficial 21-12-2023",
+2024-06-27,ley_bases,Ley Bases (Law 27742) and fiscal package passed,yes,no,"Ley 27.742 and Ley 27.743, sanctioned 27-06-2024",
+2024-07-08,ley_bases_promulgation,Ley Bases promulgated,yes,no,Boletin Oficial 08-07-2024,
+2024-07-23,phase2,Phase 2: base money ceiling (BMA at 30-Apr level),yes,no,BCRA Nota de Prensa 23-07-24 (formal Fase 2 inauguration; BMA ceiling 47.7 bn pesos),verbal announcement 28-06-2024 press conference (Caputo/Bausili) is secondary; LEFI issued 17-07; repo window closed 22-07
+2025-02-01,crawl_1pct,Crawl reduced to 1 percent per month,yes,no,BCRA announcement (reported mid-Jan 2025; effective 01-02-2025),
+2025-04-11,imf_band,IMF EFF approval; band introduction; partial cepo lift,yes,no,IMF Press Release 25/101 (11-04-2025); BCRA 'Inicio de la Fase 3'; Com. A 8226,
+2025-09-07,ba_election,Buenos Aires provincial election loss,yes,yes,Buenos Aires provincial electoral authority results 07-09-2025,
+2025-10-09,us_swap,US Treasury USD 20bn swap announcement and direct FX intervention,yes,yes,Bessent X post 09-10-2025; CRS Report R48780; US Treasury ESF Monthly Statement Oct-2025,
+2025-10-26,midterms,Midterm elections,yes,yes,National midterm election results 26-10-2025,
+2025-12-15,indexed_band_announcement,Announcement of the inflation-indexed band,yes,no,"BCRA Comunicado 'Profundizacion del esquema de agregados monetarios: fase de re-monetizacion 2026', 15-12-2025",in force 01-01-2026
+2026-01-02,indexed_band_start,Indexed band in force,yes,no,BCRA Comunicado 15-12-2025 (in force 01-01-2026),

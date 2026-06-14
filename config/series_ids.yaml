@@ -1,0 +1,50 @@
+bcra:
+  monetarias:
+    base_money:
+      regex: ^Base monetaria$
+      categoria: Principales Variables
+    reserves_gross: reservas internacionales.*(excluidas)
+    fx_official_a3500: tipo de cambio mayorista de referencia
+    m2_transac: m2.*transaccional.*privado
+    deposits_usd_priv:
+      regex: dep[óo]sitos del sector privado no financiero$
+      unidad: millones de USD
+  factors_any: efecto monetario
+  factor_groups:
+    fx_purchases: divisas|cambio
+    treasury: tesoro|sector p[úu]blico
+    sterilization: leliq|pases|lefi|t[íi]tulos|esterilizaci|notaliq|lebac
+    interest: inter[ée]s|primas|remuneraci
+  resolved:
+    base_money: 15
+    reserves_gross: 74
+    fx_official_a3500: 5
+    m2_transac: 197
+    deposits_usd_priv: 108
+datos_gob_ar:
+  fiscal_primary:
+    id: 452.3_RESULTADO_RIO_0_M_18_54
+    q: resultado primario sector publico nacional no financiero
+    title_regex: resultado primario
+  fiscal_financial:
+    id: 452.3_RESULTADO_ERO_0_M_20_25
+    q: resultado financiero sector publico nacional no financiero
+    title_regex: resultado financiero
+  gdp_nominal:
+    id: 4.4_OGP_2004_T_17
+    q: producto interno bruto precios corrientes trimestral
+    title_regex: (pib|producto).*corrientes
+  emae:
+    id: 143.3_NO_PR_2004_A_21
+    q: emae estimador mensual actividad
+    title_regex: emae
+  resolved:
+    fiscal_primary: 452.3_RESULTADO_RIO_0_M_18_54
+    fiscal_financial: 452.3_RESULTADO_ERO_0_M_20_25
+    gdp_nominal: 4.4_OGP_2004_T_17
+    emae: 143.3_NO_PR_2004_A_21
+fred:
+  us_cpi: CPIAUCSL
+  israel_cpi: ISRCPIALLMINMEI
+bcb:
+  brazil_ipca: 433

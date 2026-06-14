@@ -1,0 +1,37 @@
+# All file/page endpoints in one place so URL drift is a one-line fix.
+# Scripts try `direct` first; if it 404s they scrape `page` for a link matching
+# `link_regex` (most-recent match wins). Paste a working link into `direct`
+# if both fail.
+
+bcra_api_base: "https://api.bcra.gob.ar"
+
+indec:
+  page: "https://www.indec.gob.ar/Nivel4/Tema/3/5/31"
+  link_regex: "ftp/cuadros/economia/sh_ipc_[0-9]{2}_[0-9]{2}\\.xls[x]?"
+  direct: ""          # e.g. https://www.indec.gob.ar/ftp/cuadros/economia/sh_ipc_05_26.xls
+  base: "https://www.indec.gob.ar"
+
+rem:
+  page: "https://www.bcra.gob.ar/PublicacionesEstadisticas/Relevamiento_Expectativas_de_Mercado.asp"
+  link_regex: "Pdfs/PublicacionesEstadisticas/[^\"']*\\.xlsx"
+  direct: ""          # the 'REM base de datos' xlsx
+  base: "https://www.bcra.gob.ar"
+
+itcrm:
+  direct: "https://www.bcra.gob.ar/Pdfs/PublicacionesEstadisticas/ITCRMSerie.xlsx"
+
+bluelytics:
+  evolution: "https://api.bluelytics.com.ar/v2/evolution.json"
+
+ambito:
+  # {start}/{end} as DD-MM-YYYY
+  embi: "https://mercados.ambito.com/riesgopais/historico-general/{start}/{end}"
+  mep:  "https://mercados.ambito.com/dolarrava/mep/historico-general/{start}/{end}"
+  ccl:  "https://mercados.ambito.com/dolarrava/cl/historico-general/{start}/{end}"
+
+datos_gob_ar:
+  series: "https://apis.datos.gob.ar/series/api/series"
+  search: "https://apis.datos.gob.ar/series/api/search"
+
+fredgraph: "https://fred.stlouisfed.org/graph/fredgraph.csv"
+bcb_sgs: "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados"
