@@ -1,7 +1,7 @@
 # Chart.js HTML widgets from the saved chart data (output/data/*.rds).
 #
 # Follows the taylor-rule widget pattern exactly: standalone <figure> HTML,
-# Chart.js 4.4.1 lazy-loaded from cdnjs behind a shared window.__chartjs
+# Chart.js 4.4.1 lazy-loaded from jsDelivr (cdn.jsdelivr.net) behind a shared window.__chartjs
 # promise, light/dark theme via a MutationObserver on document.body's class
 # list, stat cards, HTML legend with data-k swatches, source footer.
 # One generic JS renderer is parameterized per figure by a serialized spec.
@@ -19,7 +19,7 @@ JS_TEMPLATE <- "
   window.__chartjs = window.__chartjs || new Promise(function(resolve) {
     if (window.Chart) return resolve();
     var s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js';
     s.onload = resolve;
     document.head.appendChild(s);
   });
@@ -259,7 +259,7 @@ rds <- function(name) {
 num <- function(x) ifelse(is.finite(x), round(x, 2), NA)
 
 guide <- c("# Embedding the Argentina widgets", "",
-           "Same mechanics as the taylor-rule widgets: Chart.js 4.4.1 from cdnjs",
+           "Same mechanics as the taylor-rule widgets: Chart.js 4.4.1 from jsDelivr (cdn.jsdelivr.net)",
            "behind `window.__chartjs`, light/dark via `is-light` on `body`.", "",
            "| File | Canvas | Recommended iframe height |",
            "|------|--------|---------------------------|")
