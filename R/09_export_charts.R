@@ -44,7 +44,9 @@ JS_TEMPLATE <- "
       gray:    light ? '#8a8a86' : '#9ca3af',
       band:    light ? 'rgba(185,210,235,0.35)' : 'rgba(96,165,250,0.12)',
       hband:   light ? 'rgba(29,158,117,0.15)'  : 'rgba(52,211,153,0.12)',
-      muted:   light ? 'rgba(0,0,0,0.50)' : 'rgba(255,255,255,0.55)'
+      muted:   light ? 'rgba(0,0,0,0.50)' : 'rgba(255,255,255,0.55)',
+      vlabel:  light ? 'rgba(20,18,15,0.92)' : 'rgba(245,243,238,0.95)',
+      vplate:  light ? 'rgba(250,247,242,0.92)' : 'rgba(15,13,10,0.85)'
     };
   }
   function alpha(hex, a) {
@@ -82,16 +84,21 @@ JS_TEMPLATE <- "
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v) {
+        (SPEC.vlines || []).forEach(function(v, i) {
           var px = xs.getPixelForValue(v.x);
           ctx.save();
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
           ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
           ctx.stroke(); ctx.setLineDash([]);
           if (v.text) {
-            ctx.fillStyle = c.muted; ctx.font = '9px system-ui, sans-serif';
-            ctx.translate(px - 3, ca.top + 4); ctx.rotate(Math.PI / 2);
-            ctx.textAlign = 'left';
+            ctx.font = '600 10px system-ui, sans-serif';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            var ytop = ca.top + 6 + (i % 2) * (ca.bottom - ca.top) * 0.5;
+            ctx.translate(px - 3, ytop); ctx.rotate(Math.PI / 2);
+            var tw = ctx.measureText(v.text).width;
+            ctx.fillStyle = c.vplate;
+            ctx.fillRect(-4, -8, tw + 8, 15);
+            ctx.fillStyle = c.vlabel;
             ctx.fillText(v.text, 0, 0);
           }
           ctx.restore();
