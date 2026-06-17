@@ -1,8 +1,8 @@
 # Argentina Report Card — site embed bundle
 
 Paste each fenced block into the post `content_md` where its figure belongs, in place of the
-matching `![[figXX.png]]` marker. Each block is a self-contained Chart.js widget (kicker / title /
-subtitle are built in, so the Obsidian `{caption: ...}` line is not needed on the site).
+matching `![[figXX.png]]` marker (or the OLD widget embed). Each block is a self-contained
+Chart.js widget; the Obsidian `{caption: ...}` line is not needed on the site.
 
 IMPORTANT: keep the ```html-embed fences. Raw HTML outside a fence is stripped by the site's
 Parsedown safeMode and the figure silently vanishes.
@@ -90,27 +90,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -269,27 +280,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -448,27 +470,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -627,27 +660,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -806,27 +850,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -985,27 +1040,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -1164,27 +1230,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -1343,27 +1420,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -1522,27 +1610,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -1701,27 +1800,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -1880,27 +1990,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -2059,27 +2180,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -2238,27 +2370,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
@@ -2417,27 +2560,38 @@ Parsedown safeMode and the figure silently vanishes.
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v, i) {
-          var px = xs.getPixelForValue(v.x);
-          ctx.save();
-          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-          ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
-          ctx.stroke(); ctx.setLineDash([]);
-          if (v.text) {
-            // Event labels sit in the top gutter ABOVE the plot area (never over
-            // the data), rotated upward so they stay horizontally compact and do
-            // not collide when events cluster. Gutter height is reserved by
-            // layout.padding.top below whenever any vline carries text.
-            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
-            ctx.font = '600 10px system-ui, sans-serif';
-            var tw = ctx.measureText(label).width;
-            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
-            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
-            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
-          }
-          ctx.restore();
+        var vl = (SPEC.vlines || []).map(function (v) {
+          return { px: xs.getPixelForValue(v.x), text: v.text };
+        }).sort(function (a, b) { return a.px - b.px; });
+        ctx.save();
+        // dashed event lines span the plot
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        vl.forEach(function (v) {
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(v.px, ca.bottom); ctx.stroke();
         });
+        ctx.setLineDash([]);
+        // Event labels live ENTIRELY in the top gutter, never over the data.
+        // Horizontal, greedily packed into rows so they never overlap each other
+        // (even for clustered events), clamped to the canvas, with a thin leader
+        // tying each label back to its line. Gutter reserved by padding.top below.
+        ctx.font = '600 10px system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var rowH = 14, rowsRight = [];
+        vl.forEach(function (v) {
+          if (!v.text) return;
+          var label = v.text.length > 16 ? v.text.slice(0, 15) + '...' : v.text;
+          var w = ctx.measureText(label).width;
+          var lx = Math.max(ca.left + w / 2 + 2, Math.min(v.px, ca.right - w / 2 - 2));
+          var row = 0;
+          while (row < rowsRight.length && rowsRight[row] > lx - w / 2 - 6) row++;
+          rowsRight[row] = lx + w / 2 + 6;
+          var ly = ca.top - 8 - row * rowH;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
+          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
+          ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
+        });
+        ctx.restore();
         if (SPEC.hline !== undefined && SPEC.hline !== null) {
           var ys = ch.scales.y, y0 = ys.getPixelForValue(SPEC.hline);
           ctx.save(); ctx.strokeStyle = c.tick; ctx.setLineDash([4, 4]);
