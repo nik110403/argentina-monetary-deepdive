@@ -91,15 +91,17 @@ JS_TEMPLATE <- "
           ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
           ctx.stroke(); ctx.setLineDash([]);
           if (v.text) {
+            // Event labels sit in the top gutter ABOVE the plot area (never over
+            // the data), rotated upward so they stay horizontally compact and do
+            // not collide when events cluster. Gutter height is reserved by
+            // layout.padding.top below whenever any vline carries text.
+            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
             ctx.font = '600 10px system-ui, sans-serif';
+            var tw = ctx.measureText(label).width;
+            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
             ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            var ytop = ca.top + 6 + (i % 2) * (ca.bottom - ca.top) * 0.5;
-            ctx.translate(px - 3, ytop); ctx.rotate(Math.PI / 2);
-            var tw = ctx.measureText(v.text).width;
-            ctx.fillStyle = c.vplate;
-            ctx.fillRect(-4, -8, tw + 8, 15);
-            ctx.fillStyle = c.vlabel;
-            ctx.fillText(v.text, 0, 0);
+            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
+            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
           }
           ctx.restore();
         });
@@ -163,7 +165,7 @@ JS_TEMPLATE <- "
       data: { labels: SPEC.labels, datasets: datasets },
       options: {
         responsive: true, maintainAspectRatio: false, animation: false,
-        layout: { padding: { top: 18, right: 16, left: 0, bottom: 4 } },
+        layout: { padding: { top: ((SPEC.vlines || []).some(function (v) { return v.text; })) ? (SPEC.vlabelGutter || 60) : 18, right: 16, left: 0, bottom: 4 } },
         interaction: { mode: 'index', intersect: false },
         plugins: { legend: { display: false }, title: { display: false } },
         scales: scales
@@ -247,13 +249,31 @@ band_idx <- function(dates) {
   out
 }
 
+# Short, reader-facing labels for event-line annotations. The raw slugs are
+# pipeline keys; these are what shows on the chart. Falls back to a titleized slug.
+EV_LABEL <- c(
+  caputo_deval       = "Caputo deval",
+  imf_band           = "IMF band",
+  ba_election        = "BA election",
+  us_swap            = "US swap",
+  midterms           = "Midterms",
+  indexed_band_start = "Indexed band",
+  phase2             = "IMF band"
+)
+pretty_ev <- function(slug) {
+  lab <- unname(EV_LABEL[slug])
+  if (!is.na(lab)) return(lab)
+  s <- gsub("_", " ", slug)
+  paste0(toupper(substr(s, 1, 1)), substr(s, 2, nchar(s)))
+}
+
 vline_idx <- function(dates, slugs) {
   ev <- EVENTS[EVENTS$slug %in% slugs, ]
   out <- list()
   for (i in seq_len(nrow(ev))) {
     j <- which.min(abs(as.numeric(dates - ev$date[i])))
     if (abs(as.numeric(dates[j] - ev$date[i])) > 7) next
-    out[[length(out) + 1]] <- list(x = j - 1, text = ev$slug[i])
+    out[[length(out) + 1]] <- list(x = j - 1, text = pretty_ev(ev$slug[i]))
   }
   out
 }
@@ -606,6 +626,28 @@ if (!is.null(f14)) {
                 list(label = "External", key = "amber", data = num(f14$ext), width = 0))),
          "Stacked bar chart of the 2026 to 2028 external maturity wall")
   embed("fig14_cover.html", 260, 430)
+}
+
+# fig15 — DSA: required market rollover by NIR-accumulation scenario (documentary)
+f15 <- rds("fig15_dsa")
+if (!is.null(f15)) {
+  rr <- f15$rollover_req * 100               # percent; rows = years, cols = scenarios
+  scen_lab <- c("Full NIR build (100%)", "Half build (50%)", "No accumulation (0%)")
+  scen_key <- c("blue", "amber", "crimson")
+  ns <- length(f15$scenarios)
+  ds <- lapply(seq_len(ns), function(j)
+    list(label = scen_lab[j], key = scen_key[j], data = round(rr[, j]), width = 0))
+  cumr <- round(f15$cum_rollover_req * 100)
+  widget("fig15_dsa.html", "arg-fig15",
+         "Can the Wall Be Rolled?",
+         "Required market rollover rate on external amortizations, by NIR-accumulation scenario &middot; above 100% means private rollover alone cannot cover the maturity wall",
+         setNames(as.list(sprintf("%d%%", cumr)),
+                  c("Cumulative, full build", "Half build", "No accumulation"))[seq_len(ns)],
+         setNames(as.list(scen_lab[seq_len(ns)]), scen_key[seq_len(ns)]),
+         260, DOC_SRC,
+         list(type = "bar", stacked = FALSE, labels = f15$years, xEvery = 1, datasets = ds),
+         "Grouped bar chart of required market rollover rate by year and NIR-accumulation scenario")
+  embed("fig15_dsa.html", 260, 430)
 }
 
 writeLines(guide, file.path(DIR_WIDGETS, "embed_guide.md"))

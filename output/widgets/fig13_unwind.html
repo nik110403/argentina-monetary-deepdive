@@ -18,7 +18,7 @@
   });
   var canvas = document.getElementById('arg-fig13');
   if (!canvas) return;
-  var SPEC = {"type":"bar","labels":["2022-01","2022-02","2022-03","2022-04","2022-05","2022-06","2022-07","2022-08","2022-09","2022-10","2022-11","2022-12","2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05"],"xEvery":6,"datasets":[{"label":"Sterilization","key":"amber","data":[233.05,74.13,63.26,-389.45,-60.37,-874.79,216.01,52.69,-980.7,127.96,-101.72,51.16,207.86,-93.96,169.03,-476.03,-24.82,-217.75,-27.53,-678.23,-106.54,1220.75,2084.43,-1713.9,-1674.37,4076.31,-765.77,277.32,15414.31,3161.37,16214.36,-0.34,163.08,-119.6,210.03,239.56,-213.65,-144.33,256.48,-442.59,0,0,0,0,0,0,0,0,0,0,0,0,0],"width":0}],"bands":[{"from":23,"to":38},{"from":39,"to":47},{"from":48,"to":52}],"vlines":[{"x":48,"text":"indexed_band_start"}]};
+  var SPEC = {"type":"bar","labels":["2022-01","2022-02","2022-03","2022-04","2022-05","2022-06","2022-07","2022-08","2022-09","2022-10","2022-11","2022-12","2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05"],"xEvery":6,"datasets":[{"label":"Sterilization","key":"amber","data":[233.05,74.13,63.26,-389.45,-60.37,-874.79,216.01,52.69,-980.7,127.96,-101.72,51.16,207.86,-93.96,169.03,-476.03,-24.82,-217.75,-27.53,-678.23,-106.54,1220.75,2084.43,-1713.9,-1674.37,4076.31,-765.77,277.32,15414.31,3161.37,16214.36,-0.34,163.08,-119.6,210.03,239.56,-213.65,-144.33,256.48,-442.59,0,0,0,0,0,0,0,0,0,0,0,0,0],"width":0}],"bands":[{"from":23,"to":38},{"from":39,"to":47},{"from":48,"to":52}],"vlines":[{"x":48,"text":"Indexed band"}]};
   var scope = canvas.closest('figure');
   var chart;
   function palette() {
@@ -37,7 +37,9 @@
       gray:    light ? '#8a8a86' : '#9ca3af',
       band:    light ? 'rgba(185,210,235,0.35)' : 'rgba(96,165,250,0.12)',
       hband:   light ? 'rgba(29,158,117,0.15)'  : 'rgba(52,211,153,0.12)',
-      muted:   light ? 'rgba(0,0,0,0.50)' : 'rgba(255,255,255,0.55)'
+      muted:   light ? 'rgba(0,0,0,0.50)' : 'rgba(255,255,255,0.55)',
+      vlabel:  light ? 'rgba(20,18,15,0.92)' : 'rgba(245,243,238,0.95)',
+      vplate:  light ? 'rgba(250,247,242,0.92)' : 'rgba(15,13,10,0.85)'
     };
   }
   function alpha(hex, a) {
@@ -75,17 +77,24 @@
       },
       afterDraw: function(ch) {
         var ctx = ch.ctx, ca = ch.chartArea, xs = ch.scales.x;
-        (SPEC.vlines || []).forEach(function(v) {
+        (SPEC.vlines || []).forEach(function(v, i) {
           var px = xs.getPixelForValue(v.x);
           ctx.save();
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
           ctx.beginPath(); ctx.moveTo(px, ca.top); ctx.lineTo(px, ca.bottom);
           ctx.stroke(); ctx.setLineDash([]);
           if (v.text) {
-            ctx.fillStyle = c.muted; ctx.font = '9px system-ui, sans-serif';
-            ctx.translate(px - 3, ca.top + 4); ctx.rotate(Math.PI / 2);
-            ctx.textAlign = 'left';
-            ctx.fillText(v.text, 0, 0);
+            // Event labels sit in the top gutter ABOVE the plot area (never over
+            // the data), rotated upward so they stay horizontally compact and do
+            // not collide when events cluster. Gutter height is reserved by
+            // layout.padding.top below whenever any vline carries text.
+            var label = v.text.length > 12 ? v.text.slice(0, 12) : v.text;
+            ctx.font = '600 10px system-ui, sans-serif';
+            var tw = ctx.measureText(label).width;
+            ctx.translate(px, ca.top - 4); ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = c.vplate; ctx.fillRect(-2, -7, tw + 4, 14);
+            ctx.fillStyle = c.vlabel; ctx.fillText(label, 0, 0);
           }
           ctx.restore();
         });
@@ -149,7 +158,7 @@
       data: { labels: SPEC.labels, datasets: datasets },
       options: {
         responsive: true, maintainAspectRatio: false, animation: false,
-        layout: { padding: { top: 18, right: 16, left: 0, bottom: 4 } },
+        layout: { padding: { top: ((SPEC.vlines || []).some(function (v) { return v.text; })) ? (SPEC.vlabelGutter || 60) : 18, right: 16, left: 0, bottom: 4 } },
         interaction: { mode: 'index', intersect: false },
         plugins: { legend: { display: false }, title: { display: false } },
         scales: scales
