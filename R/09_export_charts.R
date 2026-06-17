@@ -112,7 +112,6 @@ JS_TEMPLATE <- "
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();

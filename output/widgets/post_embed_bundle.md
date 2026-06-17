@@ -1,11 +1,7 @@
 # Argentina Report Card — site embed bundle
 
-Paste each fenced block into the post `content_md` where its figure belongs, in place of the
-matching `![[figXX.png]]` marker (or the OLD widget embed). Each block is a self-contained
-Chart.js widget; the Obsidian `{caption: ...}` line is not needed on the site.
-
-IMPORTANT: keep the ```html-embed fences. Raw HTML outside a fence is stripped by the site's
-Parsedown safeMode and the figure silently vanishes.
+Paste each fenced block into the post `content_md` where its figure belongs, replacing the old
+widget embed. Keep the ```html-embed fences — raw HTML outside a fence is stripped by the site.
 
 
 ## Figure 1 — Monthly inflation with regime phases and the band's depreciation allowance
@@ -118,7 +114,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -308,7 +303,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -498,7 +492,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -688,7 +681,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -878,7 +870,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -1068,7 +1059,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -1258,7 +1248,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -1448,7 +1437,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -1638,7 +1626,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -1828,7 +1815,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -2018,7 +2004,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -2208,7 +2193,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -2398,7 +2382,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
@@ -2588,7 +2571,6 @@ Parsedown safeMode and the figure silently vanishes.
           var ly = ca.top - 8 - row * rowH;
           ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(v.px, ca.top); ctx.lineTo(lx, ly + 7); ctx.stroke();
-          ctx.fillStyle = c.vplate; ctx.fillRect(lx - w / 2 - 3, ly - 7, w + 6, 14);
           ctx.fillStyle = c.vlabel; ctx.fillText(label, lx, ly);
         });
         ctx.restore();
