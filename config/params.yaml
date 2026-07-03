@@ -59,3 +59,16 @@ event_study:
   placebo_guard: 21     # exclude pseudo-event dates within +/- this many trading
                         #   days of any real event from the placebo pool
   boot_seed: 20260531   # fixed seed = vintage_end, for deterministic resampling
+
+# Debt-sustainability analysis (DSA) — §VI financing-needs stress.
+# Gross financing need (GFN = IMF repurchases + external non-IMF amortizations,
+# both from config/durability_documentary.csv) is netted against projected NIR
+# accumulation under the program's reserve path. nir_target_annual is the
+# program's stated +US$8bn/yr accumulation target (CR 2026/105; 2026 projected
+# actual is +US$10bn). nir_scenarios scale it: 1.0 baseline / 0.5 half / 0.0 stall.
+# The residual gap is the financing that must be met by market rollover; the
+# module reports the required rollover rate on external amortizations per scenario.
+dsa:
+  nir_target_annual: 8.0          # USD bn/yr program reserve-accumulation target
+  nir_scenarios: [1.0, 0.5, 0.0]  # the NIR-path stress switch
+  years: [2026, 2027, 2028]

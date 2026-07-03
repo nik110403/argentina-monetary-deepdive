@@ -140,6 +140,48 @@ if (!file.exists(docpath)) {
     cat(sprintf("  fig14_cover rendered: wall %.1f / %.1f / %.1f USD bn (2026-28).\n",
                 (imf + ext)[1], (imf + ext)[2], (imf + ext)[3]))
   } else message("  fig14 SKIP — maturity_* rows incomplete in documentary CSV.")
+
+  # ---- table: durability documentary summary (IMF CR 2026/105) ------------------
+  # Renders the load-bearing sustainability figures the prose now states (NIR,
+  # reserve composition, maturity wall, Fund-credit concentration) into one
+  # auditable table, sourced row-by-row from config/durability_documentary.csv.
+  fmt <- function(x, d = 1) ifelse(is.finite(x), sprintf(paste0("%+.", d, "f"), x), "n/a")
+  imf_w <- vapply(c("2026", "2027", "2028"),
+                  function(y) val(paste0("maturity_imf_", y), y), numeric(1))
+  ext_w <- vapply(c("2026", "2027", "2028"),
+                  function(y) val(paste0("maturity_ext_", y), y), numeric(1))
+  writeLines(c(
+    "# Durability documentary summary (IMF Country Report 2026/105)", "",
+    "Primary-source figures at the locked May-2026 vintage. NIR follows the TMU",
+    "definition (gross net of swap lines, FX-deposit reserve requirements, and",
+    "net Fund credit). The end-2025 NIR QPC was missed by a large margin and waived.", "",
+    "| Metric | 2024 | 2025 | 2026 | Unit |",
+    "|---|---|---|---|---|",
+    sprintf("| Gross international reserves | %s | %s | %s | USD bn |",
+            fmt(val("gross_reserves", 2024)), fmt(val("gross_reserves", 2025)),
+            fmt(val("gross_reserves", 2026))),
+    sprintf("| Net international reserves (NIR) | %s | %s | %s | USD bn |",
+            fmt(val("nir", 2024)), fmt(val("nir", 2025)), fmt(val("nir", 2026))),
+    sprintf("| Reserve cover (gross, %% of ARA) | - | %s | - | %% |",
+            fmt(val("ara_fixed_pct", 2025), 0)),
+    sprintf("| Quasi-fiscal cost | %s | %s | %s | %% of GDP |",
+            fmt(val("quasi_fiscal_cost_gdp", 2024)),
+            fmt(val("quasi_fiscal_cost_gdp", 2025)),
+            fmt(val("quasi_fiscal_cost_gdp", 2026))),
+    "", "End-2025 borrowed reserve wedge (USD bn): ",
+    sprintf("PBoC swap %s, BIS swap %s (replacement for the repaid UST draw), BCRA repo %s.",
+            fmt(val("pboc_swap", 2025)), fmt(val("bis_swap", 2025)),
+            fmt(val("bcra_repo", 2025))),
+    "", "External maturity wall (USD bn):", "",
+    "| Year | IMF repurchases | Non-IMF amortizations | Total |",
+    "|---|---|---|---|",
+    sprintf("| %s | %s | %s | %s |", c("2026", "2027", "2028"),
+            fmt(imf_w), fmt(ext_w), fmt(imf_w + ext_w)),
+    "",
+    sprintf("Peak Fund credit 2026: %s SDR bn (1329%% of quota, 162%% of gross reserves).",
+            fmt(val("imf_outstanding_stock_sdr_bn", 2026)))),
+    file.path(DIR_TABLES, "table_durability.md"))
+  cat("  table -> output/tables/table_durability.md\n")
 }
 
 message("10_durability done.")

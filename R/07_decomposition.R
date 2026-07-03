@@ -84,6 +84,57 @@ if ("gdp_nominal" %in% names(m)) {
 }
 save_rds(sg |> select(date, seign_real, infl_tax, seign_gdp), "seigniorage")
 
+# ---- table: seigniorage by year (% of GDP) ---------------------------------------
+# Promote the seigniorage path to a published table so the "2024 one-off" claim
+# in the prose is referee-auditable rather than read from the .rds alone.
+seign_yr <- sg |>
+  filter(!is.na(seign_gdp)) |>
+  mutate(year = lubridate::year(date)) |>
+  group_by(year) |>
+  summarise(seign_gdp_yr = sum(seign_gdp, na.rm = TRUE),
+            months = dplyr::n(), .groups = "drop")
+writeLines(c(
+  "# Seigniorage by year (monthly base creation over annual-rate GDP, summed)", "",
+  "Monthly dM0 over annual-rate nominal GDP, summed within each calendar year.",
+  "2026 is partial (through the locked May vintage). The 2024 peak is the",
+  "remonetization stock adjustment harvested while real balances rebuilt.", "",
+  "| Year | Seigniorage % of GDP | Months |",
+  "|---|---|---|",
+  sprintf("| %d | %.2f | %d |", seign_yr$year, seign_yr$seign_gdp_yr, seign_yr$months)),
+  file.path(DIR_TABLES, "table_seigniorage.md"))
+cat("  table -> output/tables/table_seigniorage.md\n")
+
+# ---- table: real remonetization index (Dec 2023 = 100) ---------------------------
+# The real-base and (where present) real-M2 paths the prose cites by trough/peak.
+ri <- m |> filter(!is.na(base_money), !is.na(cpi_headline)) |>
+  arrange(date) |>
+  mutate(real_base = base_money / cpi_headline)
+base0 <- ri$real_base[ri$date == as.Date("2023-12-01")]
+if (length(base0) == 1 && is.finite(base0)) {
+  ri <- ri |> mutate(real_base_idx = 100 * real_base / base0)
+  # real_m2 is already a deflated (real) transactional-M2 level in the panel
+  # (same column R/01 indexes for fig04); index it to Dec-2023 = 100 here too
+  # so the prose figure (95.3 in May 2026) is traceable in a reviewable table.
+  if ("real_m2" %in% names(ri)) {
+    m20 <- ri$real_m2[ri$date == as.Date("2023-12-01")]
+    ri$real_m2_idx <- if (length(m20) == 1 && is.finite(m20))
+      100 * ri$real_m2 / m20 else NA_real_
+  } else ri$real_m2_idx <- NA_real_
+  rr <- ri |> filter(date >= as.Date("2023-12-01")) |>
+    select(date, real_base_idx, real_m2_idx)
+  writeLines(c(
+    "# Real remonetization index (December 2023 = 100)", "",
+    "Real monetary base (M0/CPI) and, where available, real transactional M2,",
+    "each indexed to December 2023 = 100. The July-2024 LEFI migration mechanically",
+    "lifts the narrow base, so the index overstates the behavioral recovery.", "",
+    "| Month | Real base (Dec-2023=100) | Real M2tx (Dec-2023=100) |",
+    "|---|---|---|",
+    sprintf("| %s | %.1f | %s |", format(rr$date, "%Y-%m"), rr$real_base_idx,
+            ifelse(is.na(rr$real_m2_idx), "n/a", sprintf("%.1f", rr$real_m2_idx)))),
+    file.path(DIR_TABLES, "table_remonetization.md"))
+  cat("  table -> output/tables/table_remonetization.md\n")
+} else message("  table_remonetization skipped (Dec-2023 base not found).")
+
 # ---- fig11: base money / GDP level vs the corridor, with the 2026 FX flow --------
 # Redesigned 2026-06-10. The corridor is a LEVEL target (money demand, % of GDP,
 # Dec 2026); comparing a cumulative flow against it was apples-to-oranges. The
@@ -113,11 +164,28 @@ if ("factor_fx_purchases" %in% groups && "gdp_nominal" %in% names(m)) {
   save_rds(list(level = lvl, path = y26, corridor = c(cor_lo, cor_hi),
                 gdp_vintage = "Q4-2025 annual rate, held constant for 2026"),
            "fig11_corridor")
+
+  # ---- table: base money / GDP path vs the corridor, with 2026 emission ----------
+  ct <- lvl |>
+    left_join(y26 |> select(month, cum_fx_gdp), by = c("date" = "month"))
+  writeLines(c(
+    "# Base money over GDP against the BCRA corridor", "",
+    sprintf("BCRA money-demand corridor: %.1f-%.1f%% of GDP (December 2026 target).",
+            cor_lo, cor_hi),
+    "Cumulative 2026 emission is the running sum of FX-purchase base creation over",
+    "annual-rate GDP. 2026 ratios hold GDP at the Q4-2025 annual rate and therefore",
+    "overstate the true ratio, which falls as nominal GDP grows through 2026.", "",
+    "| Month | Base money / GDP % | Cumulative 2026 FX emission % of GDP |",
+    "|---|---|---|",
+    sprintf("| %s | %.2f | %s |", format(ct$date, "%Y-%m"), ct$bm_gdp,
+            ifelse(is.na(ct$cum_fx_gdp), "-", sprintf("%+.2f", ct$cum_fx_gdp)))),
+    file.path(DIR_TABLES, "table_corridor.md"))
+  cat("  table -> output/tables/table_corridor.md\n")
   png_fig("fig11_corridor", {
     xlim <- c(min(lvl$date), as.Date("2026-12-31"))
     ylim <- c(min(c(lvl$bm_gdp, y26$cum_fx_gdp, 0), na.rm = TRUE),
               max(c(lvl$bm_gdp, cor_hi), na.rm = TRUE) * 1.1)
-    plot(NA, xlim = xlim, ylim = ylim, xlab = "", ylab = "% of GDP",
+    plot(xlim, ylim, type = "n", xlim = xlim, ylim = ylim, xlab = "", ylab = "% of GDP",
          main = "Base money vs the BCRA money-demand corridor")
     rect(as.Date("2026-01-01"), cor_lo, xlim[2], cor_hi,
          col = grDevices::adjustcolor(PAL$green, 0.15), border = NA)

@@ -50,21 +50,34 @@ rel <- div |>
 disp <- disp |> left_join(rel, by = "date")
 save_rds(disp, "fig05_dispersion")
 
-png_fig("fig05_dispersion", {
-  ylim <- range(disp$D, na.rm = TRUE)
-  plot(disp$date, disp$D, type = "n", ylim = ylim, xlab = "",
-       ylab = "Weighted SD of division inflation (pp)",
-       main = "Cross-division relative price dispersion — descriptive")
-  shade_phases(ylim)
-  lines(disp$date, disp$D, col = PAL$purple, lwd = 2)
-  lines(disp$date, zoo::rollmean(disp$D, 3, fill = NA), col = PAL$dark,
-        lwd = 1.2, lty = 2)
-  mark_events(ylim, slugs = c("caputo_deval", "phase2", "imf_band",
-                              "indexed_band_start"))
-  legend("topright", c("D_t (monthly)", "3m moving average"), bty = "n",
-         col = c(PAL$purple, PAL$dark), lwd = c(2, 1.2), lty = c(1, 2), cex = 0.8)
-})
+# The dispersion CHART was cut in the scorecard reframe (it "does not identify").
+# The series is retained as a descriptive TABLE so the prose's phase-mean numbers
+# are auditable without resurrecting the figure. Phase windows match the prose.
+disp_ph <- disp |>
+  filter(!is.na(D)) |>
+  mutate(phase = dplyr::case_when(
+    date <= as.Date("2023-11-30") ~ "0 Peronist baseline",
+    date <= as.Date("2025-03-31") ~ "1 Crawling peg",
+    date <= as.Date("2025-12-31") ~ "2 IMF band",
+    TRUE                          ~ "3 Indexed band")) |>
+  group_by(phase) |>
+  summarise(D_mean = mean(D, na.rm = TRUE), months = dplyr::n(), .groups = "drop")
+may_D <- disp$D[disp$date == as.Date("2026-05-01")]
+may_row <- if (length(may_D) == 1 && is.finite(may_D))
+  sprintf("| May 2026 (latest print) | %.2f | 1 |", may_D) else NULL
+writeLines(c(
+  "# Weighted cross-division CPI inflation dispersion, by phase", "",
+  "Weighted standard deviation of the twelve INDEC division inflation rates,",
+  "averaged within each regime phase. Descriptive only: the measure illustrates",
+  "the relative-price prediction and does not identify a Cantillon impulse",
+  "(regulated-tariff catch-up is not separated from monetary dispersion).", "",
+  "| Phase | Mean dispersion (pp) | Months |",
+  "|---|---|---|",
+  sprintf("| %s | %.2f | %d |", disp_ph$phase, disp_ph$D_mean, disp_ph$months),
+  may_row),
+  file.path(DIR_TABLES, "table_dispersion.md"))
+cat("  table -> output/tables/table_dispersion.md\n")
 
 cat(sprintf("Dispersion series: %d months, %s..%s\n",
             nrow(disp), min(disp$date), max(disp$date)))
-message("06_dispersion done (descriptive only — no tests, by design).")
+message("06_dispersion done (table only — chart cut in the scorecard reframe).")

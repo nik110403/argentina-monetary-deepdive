@@ -27,3 +27,9 @@ config/bcra_chain.pem
 
 # OS
 .DS_Store
+
+# Graphify knowledge graph (regenerable build artifact; rebuilt by post-commit hook)
+graphify-out/
+
+# Local planning notes — not part of the replication package
+TODO_*.md

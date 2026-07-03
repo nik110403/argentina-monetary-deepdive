@@ -12,11 +12,21 @@ restricts the pool to the post-Dec-2023 stabilization regime (comparable volatil
 The full pool spans 2022 hyperinflation, which widens the null and biases p upward,
 so a result that survives BOTH pools is the robust one.
 
-| Event | Series | Baseline | Mean abnormal (post) | Boot SE | Placebo p (full) | Placebo p (narrow) | NW t | n post | n plac. full | n plac. narrow |
-|---|---|---|---|---|---|---|---|---|---|---|
-| ba_election | gap_blue | 0.1 | -0.9 | 0.86 | 0.899 | 0.852 | -0.95 | 11 | 952 | 514 |
-| us_swap | gap_blue | -0.3 | +3.2 | 0.33 | 0.716 | 0.596 | 7.05 | 11 | 952 | 514 |
-| midterms | gap_blue | 2.2 | -2.4 | 0.54 | 0.770 | 0.660 | -3.63 | 11 | 952 | 514 |
-| ba_election | embi | 731.2 | +453.7 | 56.42 | 0.065 | 0.022 | 8.11 | 11 | 940 | 508 |
-| us_swap | embi | 1053.3 | -2.5 | 18.16 | 0.990 | 0.988 | -0.15 | 11 | 940 | 508 |
-| midterms | embi | 1150.2 | -497.3 | 11.11 | 0.041 | 0.020 | -38.97 | 11 | 940 | 508 |
+`Contam.` applies a pre-specified rule, fixed before inspecting results: an event is
+flagged when its baseline/pre window [t0-bpre[1], t0] overlaps a prior flagged event,
+so its baseline already embeds that shock. Contamination undermines only the reading
+of a NULL: for a flagged event with an insignificant abnormal — the Oct-2025 US swap
+(EMBI p=0.99) — the placebo p cannot separate a true null from a signal swamped by the
+prior repricing, and must NOT be read as evidence of no effect. It does not undermine a
+flagged event whose abnormal is large and significant (the post-midterms EMBI drop
+survives both pools), since a detected move is identified regardless of baseline level.
+The two election events are the reported results.
+
+| Event | Series | Baseline | Mean abnormal (post) | Boot SE | Placebo p (full) | Placebo p (narrow) | NW t | Contam. | n post | n plac. full | n plac. narrow |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| ba_election | gap_blue | 0.1 | -0.9 | 0.86 | 0.899 | 0.852 | -0.95 | no | 11 | 952 | 514 |
+| us_swap | gap_blue | -0.3 | +3.2 | 0.33 | 0.716 | 0.596 | 7.05 | yes | 11 | 952 | 514 |
+| midterms | gap_blue | 2.2 | -2.4 | 0.54 | 0.770 | 0.660 | -3.63 | yes | 11 | 952 | 514 |
+| ba_election | embi | 731.2 | +453.7 | 56.42 | 0.065 | 0.022 | 8.11 | no | 11 | 940 | 508 |
+| us_swap | embi | 1053.3 | -2.5 | 18.16 | 0.990 | 0.988 | -0.15 | yes | 11 | 940 | 508 |
+| midterms | embi | 1150.2 | -497.3 | 11.11 | 0.041 | 0.020 | -38.97 | yes | 11 | 940 | 508 |

@@ -22,12 +22,14 @@ run_script("R/02_money_demand.R")
 run_script("R/03_inertia.R")
 run_script("R/04_passthrough.R")
 run_script("R/05_events.R")
-# R/06_dispersion.R is unwired in the scorecard reframe — the relative-price
-# dispersion chart "does not identify" and was cut from the export. The script is
-# kept on disk; re-add this line to restore it to the pipeline.
+# R/06_dispersion.R: the dispersion CHART stays cut from the scorecard ("does not
+# identify"), but the script now exports a descriptive phase-mean TABLE so the
+# prose's dispersion numbers are auditable. No figure is produced.
+run_script("R/06_dispersion.R")
 run_script("R/07_decomposition.R")
 run_script("R/08_comparative.R")
 run_script("R/10_durability.R")   # §VI durability exhibits (fig12 NIR, fig13 unwind, fig14 wall)
+run_script("R/11_dsa.R")          # §VI DSA: GFN vs NIR-accumulation stress -> required rollover
 
 cat("\n==========================================================================\n")
 cat(sprintf("Pipeline end    %s   (charts: make charts -> R/09_export_charts.R)\n",
@@ -39,9 +41,16 @@ expected <- c(
   "output/tables/table2_money_demand.md",
   "output/tables/table2b_breakpoints.md",
   "output/tables/table2c_sensitivity.md",
+  "output/tables/table2d_slope_break.md",
   "output/tables/table3_plateau.md",
   "output/tables/table4_passthrough.md",
   "output/tables/table5_events.md",
+  "output/tables/table_seigniorage.md",
+  "output/tables/table_remonetization.md",
+  "output/tables/table_corridor.md",
+  "output/tables/table_dispersion.md",
+  "output/tables/table_durability.md",
+  "output/tables/table_dsa.md",
   "output/data/fig01_decomposition.rds",
   "output/data/fig02_inflation.rds",
   "output/data/fig03_gap.rds",
@@ -55,6 +64,7 @@ expected <- c(
   "output/data/fig12_nir.rds",
   "output/data/fig13_unwind.rds",
   "output/data/fig14_cover.rds",
+  "output/data/fig15_dsa.rds",
   "output/figures/fig01_decomposition.png",
   "output/figures/fig02_inflation_phases.png",
   "output/figures/fig03_gap_events.png",
@@ -67,7 +77,8 @@ expected <- c(
   "output/figures/fig11_corridor.png",
   "output/figures/fig12_nir.png",
   "output/figures/fig13_unwind.png",
-  "output/figures/fig14_cover.png"
+  "output/figures/fig14_cover.png",
+  "output/figures/fig15_dsa.png"
 )
 
 cat("\nOutput files:\n")

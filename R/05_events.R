@@ -105,6 +105,15 @@ study_series <- function(series) {
     if (is.null(r)) next
     est <- mean(r$ab)
     boot_se <- mbb_se(r$ab)
+    # baseline-window independence check: if another flagged event falls inside
+    # this event's baseline/pre span [t0-bpre[1] .. t0], the baseline is not a
+    # clean counterfactual (it already absorbs the prior shock), so the placebo p
+    # is UNINFORMATIVE for this event — it cannot separate "no effect" from
+    # "swamped by the prior repricing". The Oct-2025 US swap is contaminated this
+    # way by the 7 Sep Buenos Aires election (~22 trading days prior): its EMBI
+    # baseline sits ~322 bp above the election's. Reported, not silently dropped.
+    others <- setdiff(ev_clean, i0)
+    contam <- length(others) > 0 && any(others >= (i0 - bpre[1]) & others <= i0)
     # empirical two-sided placebo p, full and narrow (post-Dec-2023) pools
     pval   <- (1 + sum(abs(placebo)   >= abs(est))) / (1 + length(placebo))
     pval_n <- (1 + sum(abs(placebo_n) >= abs(est))) / (1 + length(placebo_n))
@@ -116,6 +125,7 @@ study_series <- function(series) {
       slug = ev$slug[k], series = series, baseline = r$base,
       mean_abnormal_post = est, boot_se = boot_se,
       placebo_p = pval, placebo_p_narrow = pval_n, nw_t = unname(nwt),
+      baseline_contaminated = contam,
       n_post = length(r$ab), n_placebo = length(placebo),
       n_placebo_narrow = length(placebo_n))
     out_win[[length(out_win) + 1]] <- data.frame(
@@ -155,11 +165,22 @@ writeLines(c(
   "restricts the pool to the post-Dec-2023 stabilization regime (comparable volatility).",
   "The full pool spans 2022 hyperinflation, which widens the null and biases p upward,",
   "so a result that survives BOTH pools is the robust one.",
-  "", "| Event | Series | Baseline | Mean abnormal (post) | Boot SE | Placebo p (full) | Placebo p (narrow) | NW t | n post | n plac. full | n plac. narrow |",
-  "|---|---|---|---|---|---|---|---|---|---|---|",
-  sprintf("| %s | %s | %.1f | %+.1f | %.2f | %.3f | %.3f | %.2f | %d | %d | %d |",
+  "",
+  "`Contam.` applies a pre-specified rule, fixed before inspecting results: an event is",
+  "flagged when its baseline/pre window [t0-bpre[1], t0] overlaps a prior flagged event,",
+  "so its baseline already embeds that shock. Contamination undermines only the reading",
+  "of a NULL: for a flagged event with an insignificant abnormal — the Oct-2025 US swap",
+  "(EMBI p=0.99) — the placebo p cannot separate a true null from a signal swamped by the",
+  "prior repricing, and must NOT be read as evidence of no effect. It does not undermine a",
+  "flagged event whose abnormal is large and significant (the post-midterms EMBI drop",
+  "survives both pools), since a detected move is identified regardless of baseline level.",
+  "The two election events are the reported results.",
+  "", "| Event | Series | Baseline | Mean abnormal (post) | Boot SE | Placebo p (full) | Placebo p (narrow) | NW t | Contam. | n post | n plac. full | n plac. narrow |",
+  "|---|---|---|---|---|---|---|---|---|---|---|---|",
+  sprintf("| %s | %s | %.1f | %+.1f | %.2f | %.3f | %.3f | %.2f | %s | %d | %d | %d |",
           tab$slug, tab$series, tab$baseline, tab$mean_abnormal_post,
           tab$boot_se, tab$placebo_p, tab$placebo_p_narrow, tab$nw_t,
+          ifelse(tab$baseline_contaminated, "yes", "no"),
           tab$n_post, tab$n_placebo, tab$n_placebo_narrow)),
   file.path(DIR_TABLES, "table5_events.md"))
 cat("  table -> output/tables/table5_events.md\n")

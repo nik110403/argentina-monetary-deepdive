@@ -1,7 +1,10 @@
-# Anchors Away — Argentina Monetary Stabilization, 2023–2026
+# Argentina Monetary Deep Dive — Promise versus Delivery, 2023–2026
 
-Replication repository for the deep dive *Anchors Away: Promises, Statutes, and the
-Monetary Stabilization of Argentina, 2023–2026* (nikkhosravipour.com/research).
+Replication repository for the working paper *Promise versus Delivery: The Fiscal
+Anchoring of Argentina's Disinflation under Milei, 2023–2026*
+([PDF](https://nikkhosravipour.com/assets/papers/5f20d724b7cb2d72883b2be7cd4d9fd4.pdf))
+and the deep dive
+[*Argentina's Monetary Report Card*](https://nikkhosravipour.com/post/argentinas-monetary-report-card-promise-versus-delivery-under-milei).
 
 Python ingests and cleans; R analyzes; outputs are Chart.js HTML widgets for the
 site plus static PNG fallbacks and markdown/HTML regression tables. The pipeline
@@ -10,19 +13,20 @@ program.
 
 ## Data vintage statement
 
-**VINTAGE NOT YET LOCKED.** Raw downloads are frozen the day after the May 2026
-CPI print (expected June 10–12, 2026). After the freeze, set `vintage_locked: true`
-in `config/params.yaml` and record the date here. Every raw download is
-timestamped under `data-raw/{source}/{YYYY-MM-DD}/` and never overwritten.
+**VINTAGE LOCKED 2026-06-13** at the May 2026 CPI print (`vintage_end:
+2026-05-31` in `config/params.yaml`). No observation after that date enters the
+panels, and the ingest scripts refuse to run while `vintage_locked: true`. Every
+raw download is timestamped under `data-raw/{source}/{YYYY-MM-DD}/` and never
+overwritten. All published estimates are recomputed on this locked panel only.
 
 ## Replication
 
 ```sh
 make deps        # python venv + pip install, R package install
 make bcra-cert   # one-time: build the BCRA TLS chain bundle (see below)
-make ingest      # run all python ingest scripts -> data/
+make ingest      # run all python ingest scripts -> data/ (blocked while vintage is locked)
 make panel       # build data/panel_monthly.csv + data/panel_daily.csv
-make analysis    # R modules 00-08 (run_all.R)
+make analysis    # R modules 01-11 (run_all.R)
 make charts      # R module 09 -> output/widgets/*.html + output/figures/*.png
 make all         # everything above except deps and bcra-cert
 ```
@@ -67,22 +71,24 @@ errors do not propagate, but the cited values must be exact.
 
 ## Layout
 
-See `NOTES_` planning file in the vault for the full architecture. Scripts:
-
 | Script | Role |
 |---|---|
 | `python/ingest_*.py` | one source each; snapshot raw, write tidy csv to `data/` |
 | `python/build_panel.py` | merge to monthly + daily panels with phase and event flags |
 | `R/00_setup.R` | packages, paths, phases, palette, helpers |
 | `R/01_descriptives.R` | phase-annotated series, summary table, figs 2/4/6/7 (provisional numbering: 3 is built in 05) |
-| `R/02_money_demand.R` | Test 1: Gagnon replication + extension, recursive elasticity (fig 9) |
+| `R/02_money_demand.R` | Test 1: Obstfeld replication + extension, recursive elasticity (fig 9), Bai–Perron and slope-constancy break dating |
 | `R/03_inertia.R` | Test 3 support: descriptive persistence; pre-registered follow-up block (NOT RUN) |
 | `R/04_passthrough.R` | local projections pass-through by phase (appendix) |
-| `R/05_events.R` | Sep–Oct 2025 event study (figs 3, 10) |
-| `R/06_dispersion.R` | dispersion chart, descriptive only (fig 5) |
+| `R/05_events.R` | Sep–Oct 2025 event study, placebo inference (figs 3, 10) |
+| `R/06_dispersion.R` | dispersion phase-mean table, descriptive only |
 | `R/07_decomposition.R` | Test 2: base-money factors, seigniorage, 2026 corridor (figs 1, 11) |
 | `R/08_comparative.R` | aligned-path chart: Israel 1985, Brazil 1994 (fig 8) |
 | `R/09_export_charts.R` | Chart.js HTML widgets from saved chart data |
+| `R/10_durability.R` | §VI durability exhibits: NIR, unwind, maturity wall (figs 12–14) |
+| `R/11_dsa.R` | debt-sustainability stress: GFN vs NIR accumulation (fig 15) |
+| `R/12_referee_strengthening.R` | referee-response robustness on the locked panel (run on demand) |
+| `R/13_tribunal2.R` | second-round robustness: bootstrap slope shift, persistence comparators, copula DSA (run on demand) |
 
 Figure files are numbered provisionally by the visualization-plan priority order;
 the published piece renumbers captions by reading order (embeds keep file names).
