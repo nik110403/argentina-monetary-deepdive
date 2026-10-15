@@ -1,0 +1,143 @@
+{
+  "_meta": {
+    "item": "A6",
+    "drafted": "2026-08-23",
+    "register": "academic (writing-style), no first person, no contractions, no em dashes",
+    "sources": "staged.md line numbers of the live post (plans/post-voice-audit/reports/<slug>/staged.md); SPEC = figure data in output/widgets",
+    "k_spans": "<span class=\"k\" data-key=\"<k-token>\">series</span>; the scene maps data-key to the series colour"
+  },
+  "opener": {
+    "title": "Promise versus delivery",
+    "standfirst": "The candidate promised to abolish the central bank. The government now runs the most actively managed peso regime in the hemisphere. Eight views of what was delivered, what was reversed, and what nothing locks in.",
+    "big": {
+      "value": "25.5 %",
+      "label": "monthly inflation, December 2023"
+    },
+    "_src": "staged.md:3"
+  },
+  "scenes": [
+    {
+      "id": "01-three-regimes",
+      "title": "Three regimes",
+      "big": {
+        "value": "2.1 %",
+        "label": "monthly inflation, May 2026"
+      },
+      "alt": "Monthly headline and core inflation, January 2022 to May 2026, with three shaded regime bands. Headline falls from 25.5 % in December 2023 to 2.1 % in May 2026 and stays between 2 and 3 % from mid-2025; the crawl-band rate crosses above headline in 2026.",
+      "beats": [
+        "Monthly inflation ran at <span class=\"k\" data-key=\"crimson\">25.5 %</span> in December 2023. The disinflation that followed was delivered by an actively managed peso and a fiscal surplus, with the central bank kept and run hard.",
+        "Four exchange-rate regimes in succession: the crawl, the shock, the slower crawl from February 2025, and from 11 April 2025 a band of 1,000 to 1,400 pesos per dollar.",
+        "Convergence stalled. Nine consecutive prints have sat at or above 2 % per month. <span class=\"k\" data-key=\"crimson\">Headline</span> printed 2.1 % in May 2026, with <span class=\"k\" data-key=\"gray\">core</span> just below it.",
+        "The <span class=\"k\" data-key=\"blue\">band ceiling</span> indexes to the inflation it was built to contain, two months lagged. In May it permitted a monthly depreciation of 3.4 % against a 2.1 % print."
+      ],
+      "_src": "staged.md:3, 195, 215"
+    },
+    {
+      "id": "02-confidence",
+      "title": "Confidence returned",
+      "big": {
+        "value": "207 % → 1 %",
+        "label": "parallel-market premium, peak to May 2026"
+      },
+      "alt": "Two panels in sequence. First, the blue and CCL parallel-market premiums from 2022, collapsing from above 200 % to near 1 % with five event flags. Second, the real monetary base and real transactional M2 indexed to 100 at December 2023: the base at 137.7 and M2 at 95.3 in May 2026.",
+      "beats": [
+        "A currency whose <span class=\"k\" data-key=\"blue\">blue-market</span> price exceeded its official price by more than 100 % on average across 2022 and 2023. Five program events are flagged.",
+        "Across the four phases the gap means run 100.9 %, 27.6 %, 2.1 % and 1.4 %. The <span class=\"k\" data-key=\"blue\">blue</span> premium now sits within about 1 % of parity; the <span class=\"k\" data-key=\"crimson\">CCL</span> premium remains wider.",
+        "Money balances tell a more textured story. Indexed to 100 at December 2023, the <span class=\"k\" data-key=\"crimson\">real base</span> fell to 78.7 in March 2024 and stood at 137.7 in May 2026, inflated by the July 2024 LEFI migration.",
+        "<span class=\"k\" data-key=\"blue\">Real transactional M2</span> remains below its starting level, at 95.3 in May. The narrow base recovered and the broad aggregate did not."
+      ],
+      "_src": "staged.md:235, 615"
+    },
+    {
+      "id": "03-treasury",
+      "title": "Treasury financing stopped",
+      "big": {
+        "value": "2.98 % → 0.05 %",
+        "label": "seigniorage, % of GDP, 2024 to May 2026"
+      },
+      "alt": "Stacked monthly bars of base-money creation by source, ARS bn, January 2022 to May 2026: Treasury, FX purchases, sterilization and other. Treasury financing dominates before December 2023 and goes to zero after; by 2026 creation comes from FX purchases with sterilization at zero.",
+      "beats": [
+        "Holding to an exact accounting identity, the decomposition shows where the money came from. Before December 2023 the <span class=\"k\" data-key=\"crimson\">Treasury</span> was the source.",
+        "After December 2023 <span class=\"k\" data-key=\"crimson\">Treasury</span> financing goes to zero. The two large <span class=\"k\" data-key=\"amber\">sterilization</span> swings in 2024 are the LEFI migration, an accounting move rather than creation.",
+        "By 2025 creation comes from <span class=\"k\" data-key=\"blue\">foreign-exchange purchases</span> offset by sterilization. Seigniorage fell from 2.98 % of GDP in 2024 to 0.05 % through May 2026; that one-off stock adjustment cannot be repeated."
+      ],
+      "_src": "staged.md:813, 817"
+    },
+    {
+      "id": "04-ballot-box",
+      "title": "The ballot box",
+      "big": {
+        "value": "USD 20 bn",
+        "label": "United States swap framework, 9 October 2025"
+      },
+      "alt": "Daily EMBI sovereign spread through 2025 with three event flags: the Buenos Aires provincial election loss on 7 September, the United States swap announcement on 9 October, and the midterm win on 26 October. The spread widens by 454 basis points after the first and compresses by 497 after the third.",
+      "beats": [
+        "A stress test arrived in the austral spring of 2025. On 7 September the government lost the Buenos Aires provincial election by fourteen points, and the <span class=\"k\" data-key=\"oxblood\">EMBI</span> widened by 454 basis points within days.",
+        "On 9 October the United States Treasury announced a USD 20 bn swap framework financed through the Exchange Stabilization Fund, with USD 2.5 bn drawn by month-end.",
+        "By 26 October the government had won the midterms decisively and the spread compressed by 497 basis points. Markets priced the political outcome and left the exchange-rate rule unmarked."
+      ],
+      "_src": "staged.md:217, 815, 817"
+    },
+    {
+      "id": "05-reserves",
+      "title": "What holds the peso",
+      "big": {
+        "value": "−USD 11.8 bn",
+        "label": "net international reserves, end-2025"
+      },
+      "alt": "Gross reserves and net international reserves, USD bn, end-year 2024 to 2026. Gross rises from 16.6 to 27.6 to a projected 36.1; net stands at −2.4, −11.8 and a projected −1.8. The gap between them is the encumbrance.",
+      "beats": [
+        "<span class=\"k\" data-key=\"blue\">Gross reserves</span> ended 2025 at USD 27.6 bn. Whatever buffer defends the band is in large part claims that other parties hold against it.",
+        "Netting out activated swap lines, reserve requirements on dollar deposits and frozen Fund credit, the <span class=\"k\" data-key=\"crimson\">net position</span> stood at −USD 11.8 bn against an encumbrance near USD 39 bn.",
+        "For end-2026 the Fund projects USD 36.1 bn gross and −USD 1.8 bn net; those bars are a projection. The October swap was repaid in December from an equal BIS line, so the borrowing only changed counterparty."
+      ],
+      "_src": "staged.md:1011; SPEC fig12"
+    },
+    {
+      "id": "06-wall",
+      "title": "Can the wall be rolled?",
+      "big": {
+        "value": "114.7 %",
+        "label": "required 2026 rollover with no reserve accumulation"
+      },
+      "alt": "Grouped bars of the required market rollover rate on external amortizations for 2026, 2027 and 2028 under three reserve-accumulation scenarios, against a dashed 100 % ceiling. With full accumulation the rate rises to 82.5 % by 2028; with none it exceeds 100 % in every year.",
+      "readout": "{year}: {pct} % of maturing external debt must be rolled in the market. {verdict}",
+      "verdicts": {
+        "feasible": "Feasible.",
+        "infeasible": "Infeasible: more than the entire stock of maturing debt."
+      },
+      "beats": [
+        "External amortizations run USD 8.6 bn in 2026, near USD 11.9 bn in 2027 and a peak USD 14.6 bn in 2028. Netting them against targeted reserve accumulation yields the rollover rate the program implicitly requires.",
+        "On the full reserve path the wall is rollable, the required rate rising to 82.5 % by 2028.",
+        "Halve the accumulation and the 2027 and 2028 walls demand rollover above 100 %, more than the entire stock of maturing debt. With no accumulation every year sits above the ceiling. Three modelled scenarios, linear between them."
+      ],
+      "_src": "staged.md:1201; story/data/dsa_grid.json (0.825 → 82.5 %; 1.1467 → 114.7 %)"
+    },
+    {
+      "id": "07-institution",
+      "title": "The institution not built",
+      "big": {
+        "value": "0.60 vs 0.26",
+        "label": "inflation persistence, Argentina under the band vs de-indexed Israel"
+      },
+      "alt": "Monthly inflation for Israel 1985, Brazil 1994 and Argentina 2023, aligned at month zero of each stabilization and followed for 30 months. Israel and Brazil fall below 2 % and stay there; Argentina touches 1.5 % for four months and returns to 2.15 % by month 29.",
+      "beats": [
+        "Brazil's Real Plan erased indexation memory before the currency switch. <span class=\"k\" data-key=\"green\">Brazil 1994</span> and <span class=\"k\" data-key=\"blue\">Israel 1985</span> both fell below 2 % per month and stayed there.",
+        "<span class=\"k\" data-key=\"crimson\">Argentina 2023</span> followed the same path for a year and a half, touched 1.5 % for four months, and returned above 2 %.",
+        "Argentina wrote indexation into the exchange-rate rule instead. Post-stabilization persistence is 0.26 for de-indexed Israel against 0.60 for Argentina under the indexed band, the higher persistence an anchor fed its own lagged prices predicts."
+      ],
+      "_src": "staged.md:1213; SPEC fig08 (sub-2 % months counted from the series: Israel 22 of 43, Brazil 24 of 43, Argentina 4 of 43; Argentina t=29 = 2.15)"
+    }
+  ],
+  "close": {
+    "title": "The verdict",
+    "verdict": "Delivered: the disinflation from 25.5 % to 2.1 % per month, the parallel premium from triple digits to near parity, a fiscal surplus held every month since January 2024. Reversed: dollarization and the closure of the central bank. Held by discretion: the surplus and a reserve position negative on net. Nothing locks the achievement in.",
+    "footer": {
+      "post": "/post/argentinas-monetary-report-card-promise-versus-delivery-under-milei",
+      "pdf": "/assets/papers/dae618c21735d5da1bbfb0620c40a59c.pdf",
+      "repo": "https://github.com/nik110403/argentina-monetary-deepdive",
+      "vintage": "Data vintage May 2026"
+    },
+    "_src": "staged.md:1411"
+  }
+}

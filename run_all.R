@@ -91,3 +91,26 @@ for (f in expected) {
   }
 }
 cat("\n")
+
+# ---- exact package/R versions for this run (S9) -----------------------------
+# Records the environment actually used to produce output/, since renv.lock
+# (R/00_setup.R) pins CRAN versions as of the snapshot date, not necessarily
+# the 2026-06 analysis environment. See README's Computational requirements.
+if (requireNamespace("sessioninfo", quietly = TRUE)) {
+  sessioninfo::session_info(to_file = "output/session_info.txt")
+  # sessioninfo::session_info() only lists loaded packages, so lpirfs (never
+  # loaded when absent — see R/00_setup.R) would otherwise go unmentioned;
+  # append its status explicitly.
+  lpirfs_line <- if (requireNamespace("lpirfs", quietly = TRUE)) {
+    sprintf("lpirfs %s installed but not loaded/used this run (see README).",
+            as.character(utils::packageVersion("lpirfs")))
+  } else {
+    "lpirfs not installed on this host; packaged cross-check skipped (see README)."
+  }
+  cat(c("", "-- optional packages not covered above -----------------------------",
+        lpirfs_line, ""),
+      file = "output/session_info.txt", sep = "\n", append = TRUE)
+  cat(sprintf("session info -> %s\n", "output/session_info.txt"))
+} else {
+  warning("sessioninfo not installed; output/session_info.txt not written", call. = FALSE)
+}

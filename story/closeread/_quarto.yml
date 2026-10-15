@@ -1,0 +1,26 @@
+project:
+  type: default
+  output-dir: _site
+  resources:
+    - brand/**
+    - lib/**
+    - data/**
+    - favicon.svg
+
+format:
+  closeread-html:
+    css:
+      - brand/fonts.css
+      - brand/brand.css
+    html-math-method: plain
+    # E5: no <img>/PNG figure anywhere on the page (every chart is drawn
+    # live) — figs/** dropped from resources along with the PNGs
+    # themselves. toc: false — critic fold-in P1 #8/#7 (see story.qmd's
+    # front matter, which sets this per-document; kept in sync here since
+    # the project-level format block is otherwise the same default a
+    # future story inherits).
+    toc: false
+    embed-resources: false
+
+cr-section:
+  layout: sidebar-left

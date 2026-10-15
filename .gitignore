@@ -14,7 +14,8 @@ __pycache__/
 *.pyc
 
 # Heavy / regenerable
-data-raw/
+data-raw/*
+!data-raw/MANIFEST.sha256
 **/*.rds
 
 # R
@@ -33,3 +34,17 @@ graphify-out/
 
 # Local planning notes — not part of the replication package
 TODO_*.md
+
+# Design-review and prose-engine internals — not part of the replication package
+.impeccable/
+story/briefs/
+story/rendered/
+story/render.sh
+
+# Internal review/tribunal artifacts and machine-specific logs — not part of the replication package
+story/rendered/
+output/session_info.txt
+R/13_tribunal2.R
+output/tables/tribunal2.md
+*CRITIQUE*
+*tribunal*

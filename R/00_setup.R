@@ -22,17 +22,40 @@ user_lib <- path.expand(user_lib)
 if (!dir.exists(user_lib)) dir.create(user_lib, recursive = TRUE)
 .libPaths(c(user_lib, .libPaths()))
 
-install_if_missing <- function(pkg) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    install.packages(pkg, lib = user_lib,
-                     dependencies = c("Depends", "Imports", "LinkingTo"),
-                     repos = "https://cloud.r-project.org")
-  }
+# Environment is pinned via renv (renv.lock, snapshot type "implicit" — see
+# renv/settings.json; "explicit" would require a root DESCRIPTION file, which
+# this repo does not have); restore is a no-op once the project library
+# already matches the lock. `lpirfs` is
+# deliberately not in the lock (not installed on the analysis host; see
+# README's Computational requirements) — the loader below tolerates its
+# absence rather than crashing the pipeline over an optional cross-check.
+if (requireNamespace("renv", quietly = TRUE) && file.exists("renv.lock")) {
+  renv::restore(prompt = FALSE)
 }
 
-invisible(lapply(packages, install_if_missing))
-invisible(lapply(packages, library, character.only = TRUE))
+invisible(lapply(packages, function(pkg) {
+  if (requireNamespace(pkg, quietly = TRUE)) {
+    suppressMessages(library(pkg, character.only = TRUE))
+  } else {
+    warning(sprintf("package '%s' not installed; continuing without it (see README)", pkg),
+            call. = FALSE)
+  }
+}))
 suppressMessages(library(dplyr))   # reload last so select/filter/lag win
+
+# renv's static dependency scan cannot see the character.only=TRUE loop above
+# (packages are loaded by variable, not literal name), so it reports every
+# entry as "used: n" even though all are genuinely loaded at runtime. This
+# never-executed block gives renv's parser a literal library() call per
+# package to detect; it does not run (the loop above already loaded
+# everything). `lpirfs` is deliberately omitted — it is optional and not in
+# renv.lock (see README's Computational requirements) — so it stays outside
+# renv's "used" accounting rather than showing as a spurious mismatch.
+if (FALSE) {
+  library(dplyr); library(zoo); library(lubridate); library(yaml)
+  library(urca); library(lmtest); library(sandwich); library(strucchange)
+  library(fixest); library(modelsummary); library(jsonlite)
+}
 
 # ---- paths -------------------------------------------------------------------
 DIR_DATA    <- "data"

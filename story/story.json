@@ -1,0 +1,28 @@
+{
+  "slug": "argentinas-monetary-report-card-promise-versus-delivery-under-milei",
+  "title": "Argentina's Monetary Report Card: Promise versus Delivery under Milei",
+  "standfirst": "Javier Milei won by promising to abolish the central bank and scrap the peso. He kept neither, and now runs the most hands-on monetary regime in the hemisphere. Inflation still collapsed, from 25 percent a month to near 2. The revolution he sold did not do it. A budget surplus propped up by elections and borrowed dollars did, lashed to an exchange-rate band that floats on the very inflation it is meant to kill. The win is real. Nothing makes it last.",
+  "author": "Nik Khosravipour",
+  "date": "2026-06-17",
+  "post": "/post/argentinas-monetary-report-card-promise-versus-delivery-under-milei",
+  "pdf": "/assets/papers/dae618c21735d5da1bbfb0620c40a59c.pdf",
+  "repo": "https://github.com/nik110403/argentina-monetary-deepdive",
+  "genre": "decomposition",
+  "flavor": "split",
+  "accent": "oxblood",
+  "mode": "canvas",
+  "charts": {
+    "widgets": "../output/widgets",
+    "pngBase": "/assets/figures/argentinas-monetary-report-card-promise-versus-delivery-under-milei/"
+  },
+  "vintage": "May 2026 CPI",
+  "nav": true,
+  "canvas": {
+    "opener": {
+      "big": { "value": "25.5 %", "label": "monthly inflation, December 2023" }
+    },
+    "close": {
+      "verdict": "<p>Delivered: the disinflation from 25.5 % to 2.1 % per month, the parallel premium from triple digits to near parity, a fiscal surplus held every month since January 2024. Reversed: dollarization and the closure of the central bank. Held by discretion: the surplus and a reserve position negative on net. Nothing locks the achievement in.</p>"
+    }
+  }
+}

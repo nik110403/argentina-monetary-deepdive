@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this replication package, please cite the working paper."
+title: "Replication package: Promise versus Delivery"
+authors:
+  - family-names: Khosravipour
+    given-names: Nik
+    email: nik@khosravipour.at
+    affiliation: American Institute for Economic Research
+    orcid: "https://orcid.org/0009-0007-4464-5002"
+license: CC-BY-4.0
+repository-code: "https://github.com/nik110403/argentina-monetary-deepdive"
+preferred-citation:
+  type: report
+  title: "Promise versus Delivery: The Fiscal Anchoring of Argentina's Disinflation under Milei, 2023-2026"
+  authors:
+    - family-names: Khosravipour
+      given-names: Nik
+  year: 2026
+  month: 6
+  institution:
+    name: Working paper

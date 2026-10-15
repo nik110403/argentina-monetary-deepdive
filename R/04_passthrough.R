@@ -89,7 +89,7 @@ lp_pkg <- tryCatch({
   lpirfs::lp_lin(endog, lags_endog_lin = 2, trend = 0, shock_type = 0,
                  confint = 1.96, hor = H)
 }, error = function(e) {
-  message("lpirfs failed (non-fatal, manual LPs above are primary): ",
+  warning("lpirfs failed (non-fatal, manual LPs above are primary): ",
           conditionMessage(e)); NULL
 })
 if (!is.null(lp_pkg)) save_rds(lp_pkg, "passthrough_lpirfs")

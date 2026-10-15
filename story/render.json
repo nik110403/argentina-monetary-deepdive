@@ -1,0 +1,66 @@
+{
+  "three-regimes-of-inflation": {
+    "k": {
+      "blue": [
+        "crawling peg"
+      ],
+      "crimson": [
+        "headline inflation"
+      ],
+      "actual": [
+        "core"
+      ]
+    }
+  },
+  "confidence-returned": {
+    "k": {
+      "blue": [
+        "blue gap",
+        "real monetary base"
+      ],
+      "green": [
+        "real transactional M2"
+      ]
+    }
+  },
+  "the-anchor-was-fiscal-and-political": {
+    "k": {
+      "crimson": [
+        "treasury financing"
+      ],
+      "blue": [
+        "foreign-exchange purchases"
+      ],
+      "amber": [
+        "sterilization"
+      ]
+    }
+  },
+  "durability-is-borrowed": {
+    "k": {
+      "blue": [
+        "gross international reserves"
+      ],
+      "crimson": [
+        "net international reserve"
+      ]
+    }
+  },
+  "the-institution-that-was-not-built": {
+    "k": {
+      "amber": [
+        "Israel"
+      ],
+      "green": [
+        "Brazil"
+      ],
+      "crimson": [
+        "Argentina"
+      ]
+    }
+  },
+  "the-promise": {},
+  "can-the-wall-be-rolled": {},
+  "the-verdict": {},
+  "method": {}
+}

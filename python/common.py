@@ -7,6 +7,7 @@ row counts and date ranges to stdout.
 """
 
 import datetime as dt
+import hashlib
 import io
 import json
 import os
@@ -112,6 +113,10 @@ def snapshot(source, filename, content):
     with open(path, mode) as f:
         f.write(content)
     print(f"  raw -> {path.relative_to(ROOT)}")
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    relpath = path.relative_to(RAW).as_posix()
+    with open(RAW / "MANIFEST.sha256", "a") as f:
+        f.write(f"{digest}  ./{relpath}\n")
     return path
 
 

@@ -1,0 +1,1231 @@
+---
+title: "Argentina's Monetary Report Card: Promise versus Delivery under Milei"
+subtitle: "Javier Milei won by promising to abolish the central bank and scrap the peso. He kept neither, and now runs the most hands-on monetary regime in the hemisphere. Inflation still collapsed, from 25 percent a month to near 2. The revolution he sold did not do it. A budget surplus propped up by elections and borrowed dollars did, lashed to an exchange-rate band that floats on the very inflation it is meant to kill. The win is real. Nothing makes it last."
+author: "Nik Khosravipour"
+date: "2026-06-17"
+pdf: "/assets/papers/dae618c21735d5da1bbfb0620c40a59c.pdf"
+repo: "https://github.com/nik110403/argentina-monetary-deepdive"
+vintage: "May 2026 CPI"
+accent: oxblood
+format: closeread-html
+output-file: index.html
+html-math-method: plain
+toc: false
+anchor-sections: false
+include-in-header:
+  text: |
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+---
+
+<!-- E5 (SPEC.md closeread-engine): every chart on this page is drawn live
+     by OJS + d3 from hand-written JSON under data/ (source comment per
+     file) — no raster figure tag anywhere. All story-local CSS moved to
+     closeread/template/brand/brand.css (E5: "story.qmd's inline styles
+     move into brand.css"); nothing is authored here but structure and the
+     verbatim steps.md prose. -->
+
+{{< include brand/header.html >}}
+
+<!-- shared OJS bindings: d3, the charts.js chrome library, and the three
+     hand-written data files every scene below draws from. One-time load,
+     reused by every OJS cell on the page (OJS is one document-wide
+     reactive graph regardless of which sticky div a cell's output lands
+     in — see the scrub-scene comment this replaces, previously duplicated
+     per scene). -->
+
+```{ojs}
+//| echo: false
+d3 = {
+  await import("../../../lib/d3.min.js");
+  return globalThis.d3;
+}
+```
+
+```{ojs}
+//| echo: false
+charts = import("../../../lib/charts.js")
+```
+
+<!-- E5 fix round 1: quarto/OJS's built-in `width` is the reactive-width
+     Generator wired to the PAGE's main-content element (quarto-ojs-runtime
+     `lib.width`, main.clientWidth), not the sticky card the sidebar charts
+     actually render into. brand.css caps `.sticky-col-stack .sticky` at
+     `min(90%, 640px)`, so an SVG's viewBox built from `width` scaled the
+     whole drawing down by roughly card-width/page-width (~0.42 at 1440px)
+     and every rem-sized text label shrank with it — that's the ~5px axis
+     labels Nik flagged. Only the three sidebar drawers (drawRegimes,
+     drawConfidenceGap, drawConfidenceBalances) take a card-measured width
+     instead of `width` — the hook and scrub scenes' `.cr-chart-full`
+     stickies are unpadded and full-width already (measured ratio ~1, see
+     E5-fix1 report), so `width` is still correct for them.
+
+     E5 fix round 2: the fix-round-1 `stickyWidth` cell measured a single
+     probe element (`document.querySelector` on a class selector, always
+     the first sidebar sticky in DOM order) and every one of the 8 sidebar
+     cells below drew at that ONE probed width regardless of which card
+     they actually render into. That happened to be visually harmless
+     while every `.sticky-col-stack .sticky` shares one CSS width rule, but
+     it is the wrong measurement in principle — a per-section width change
+     (or a future per-card CSS override) would silently mis-scale every
+     card except the probed one with no detector for it. `cardWidth(id)`
+     below is the same ResizeObserver-driven measurement, but scoped to
+     the ONE card it is called for (`document.getElementById`, not a
+     shared class probe), so each of the 8 cells declares its own reactive
+     width bound to its own `#cr-*` id. Same `width`-generator fallback as
+     before when that specific element is missing or measures 0. -->
+```{ojs}
+//| echo: false
+function cardWidth(id) {
+  return Generators.observe((change) => {
+    const el = document.getElementById(id);
+    function measure() {
+      if (!el) return width;
+      const cs = getComputedStyle(el);
+      const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      const w = el.clientWidth - pad;
+      return w > 0 ? w : width;
+    }
+    change(measure());
+    if (!el || typeof ResizeObserver !== "function") return;
+    const ro = new ResizeObserver(() => change(measure()));
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
+}
+```
+
+<!-- R1c (SPEC.md closeread-engine, P3: "drawers accept {width, height}...
+     add cardSize(id) beside cardWidth(id)"): the exhibit panel (brand.css
+     R1c block) gives each sidebar chart a MEASURED height via CSS flexbox
+     (`.exhibit-chart{flex:1;min-height:0}`, sized by whatever the panel's
+     title/caption/source leave over) instead of the old fixed aspect ratio
+     `h = Math.round(w * 0.66)` -- a taller/wider panel now gets a taller/
+     wider chart instead of a wide chart with dead paper above and below it
+     (the gap analysis's own F2/#1). Same ResizeObserver-per-id pattern as
+     cardWidth, scoped to the `.exhibit-chart` descendant (the flex item
+     whose OWN computed height is the number that matters -- the outer
+     `.sticky`'s height also includes the title/caption/source chrome,
+     which is not available to the chart). Falls back to the sticky's own
+     element, then to the page `width` generator, same fallback chain
+     cardWidth already uses, if `.exhibit-chart` isn't found (shouldn't
+     happen once P5's markup pattern is followed, but a broken story.qmd
+     edit should degrade, not throw). -->
+```{ojs}
+//| echo: false
+function cardSize(id) {
+  return Generators.observe((change) => {
+    const el = document.getElementById(id);
+    const chartEl = el ? el.querySelector(".exhibit-chart") : null;
+    function measure() {
+      const target = chartEl || el;
+      if (!target) return { width, height: Math.round(width * 0.6) };
+      const cs = getComputedStyle(target);
+      const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+      const w = target.clientWidth - padX;
+      const h = target.clientHeight - padY;
+      return {
+        width: w > 0 ? w : width,
+        height: h > 0 ? h : Math.round((w > 0 ? w : width) * 0.6),
+      };
+    }
+    change(measure());
+    if (!chartEl || typeof ResizeObserver !== "function") return;
+    const ro = new ResizeObserver(() => change(measure()));
+    ro.observe(chartEl);
+    return () => ro.disconnect();
+  });
+}
+```
+
+<!-- R1c fix2 (SPEC.md closeread-engine, H1/P0): closeread.js's own
+     `transformSticky` (closeread.js:308, out of this item's fence) sets
+     `focusedSticky.style.transform` on whichever element carries the
+     trigger's `focus-on` id -- that HAS to be the outer `.sticky` (the
+     `[id=...]` match closeread.js itself uses, closeread.js:189), because
+     that same id-bearing element is also the one `.classList.add("cr-active")`
+     targets, and `.cr-active{opacity:1}` (closeread.scss) is what makes a
+     sticky visible at all. So `scale-by`/`pan-to` unavoidably scale/pan
+     the WHOLE sticky -- title, chart, caption, source together -- against
+     a ground (`.sticky-col-stack`) that never scales, and its own
+     `overflow:hidden` guillotines whatever the transform pushed past the
+     ground's edge (measured: title/source fully clipped on
+     `#cr-confidence-2` at every width, critic P0).
+
+     Two-part fix, entirely in-fence (no closeread.js/.scss edit):
+     (1) THIS function cancels that transform on .exhibit-title/-chart(as
+     a BOX)/-caption/-source by giving each one its own exact-inverse
+     counter-transform, so none of the four visually moves or resizes --
+     derivation: a parent transform F(p) = O + s(p-O) + pan (O = parent's
+     own transform-origin point, s/pan = scale-by/pan-to) composes with a
+     child's OWN transform G(q) = Q + s_c(q-Q) + t_c as F(G(q)); setting
+     s_c = 1/s and the CHILD's transform-origin Q equal (in px) to the
+     SAME point as the parent's O collapses the messy general solution
+     (which needs the layout-dependent offset (O-Q), unknowable for
+     .exhibit-caption/-source since their position depends on the chart's
+     own variable height) down to t_c = -pan/s, a constant needing only
+     `scale` and `pan` -- both fixed, authored constants (the trigger's
+     own `scale-by`/`pan-to`). Q=O is achieved by MEASURING each child's
+     real offset from the sticky (offsetLeft/Top -- transform-independent,
+     unaffected by any transform already applied) and setting that child's
+     `transform-origin` in px to land exactly on the sticky's own centre.
+     (2) `.exhibit-chart`'s OWN box is included in the cancel set (not
+     just title/caption/source) so the zoom doesn't bleed into them --
+     the VISIBLE zoom instead comes from brand.css's separate
+     `--exhibit-scale`/`--exhibit-pan-x/-y` rule on `.exhibit-chart > *`
+     (the chart's own inner content), read from the SAME custom
+     properties this function reads off `.exhibit-chart` itself (single
+     source of truth: set once, in the `.exhibit-chart` div's own inline
+     `style=` in the markup below, matched exactly to the trigger's own
+     scale-by/pan-to values) -- clipped cleanly to `.exhibit-chart`'s own
+     (now correctly positioned) `overflow:hidden` frame instead of the
+     whole panel's. Net effect: title/caption/source never move: the
+     chart alone appears to zoom, capped inside its own frame -- both of
+     the critic's suggested fixes ("scope to .exhibit-chart only" /
+     "cap the scaled chart inside the panel") in one mechanism. -->
+```{ojs}
+//| echo: false
+function neutralizeScaledChrome(stickyId) {
+  return Generators.observe((change) => {
+    const sticky = document.getElementById(stickyId);
+    if (!sticky) { change(false); return; }
+    const chartEl = sticky.querySelector(":scope > .exhibit-chart");
+    const chrome = [
+      sticky.querySelector(":scope > .exhibit-title"),
+      chartEl,
+      sticky.querySelector(":scope > .exhibit-caption"),
+      sticky.querySelector(":scope > .exhibit-source"),
+    ].filter(Boolean);
+    if (!chartEl || chrome.length === 0) { change(false); return; }
+
+    // offsetLeft/offsetTop are layout-only (spec-defined, unaffected by
+    // `transform` on the element or any ancestor) -- walk the
+    // offsetParent chain up to `sticky` rather than assuming sticky IS
+    // each child's offsetParent (it isn't, unless something sets
+    // position:relative on it, which nothing here does).
+    function offsetFrom(el, ancestor) {
+      let x = 0, y = 0, node = el;
+      while (node && node !== ancestor) {
+        x += node.offsetLeft || 0;
+        y += node.offsetTop || 0;
+        node = node.offsetParent;
+      }
+      return { x, y };
+    }
+
+    function apply() {
+      const cs = getComputedStyle(chartEl);
+      const scale = parseFloat(cs.getPropertyValue("--exhibit-scale")) || 1;
+      const panXPct = parseFloat(cs.getPropertyValue("--exhibit-pan-x")) || 0;
+      const panYPct = parseFloat(cs.getPropertyValue("--exhibit-pan-y")) || 0;
+      if (scale === 1 && panXPct === 0 && panYPct === 0) return;
+      const sw = sticky.offsetWidth;
+      const sh = sticky.offsetHeight;
+      if (!sw || !sh) return;
+      // pan-to's own % resolves against the TRANSFORMED element's own
+      // border box (CSS transform spec) -- that's `.sticky`'s box, since
+      // closeread.js's transform lands there, not `.exhibit-chart`'s.
+      const panX = (panXPct / 100) * sw;
+      const panY = (panYPct / 100) * sh;
+      const tx = -panX / scale;
+      const ty = -panY / scale;
+      chrome.forEach((el) => {
+        const off = offsetFrom(el, sticky);
+        const ox = sw / 2 - off.x;
+        const oy = sh / 2 - off.y;
+        el.style.transformOrigin = ox + "px " + oy + "px";
+        el.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + (1 / scale) + ")";
+      });
+      change(true);
+    }
+
+    apply();
+    if (typeof ResizeObserver !== "function") return;
+    // observe every chrome element too, not just `sticky` -- the exhibit
+    // panel's own outer size can stay fixed (ground-set height) while a
+    // child's OFFSET still shifts (title reflowing at a font-load tick,
+    // caption/source moving because the chart's flex:1 box above them
+    // changed height) -- either kind of shift needs a re-measure.
+    const ro = new ResizeObserver(apply);
+    ro.observe(sticky);
+    chrome.forEach((el) => ro.observe(el));
+    return () => ro.disconnect();
+  });
+}
+```
+
+```{ojs}
+//| echo: false
+confidence2ChromeFix = neutralizeScaledChrome("cr-confidence-2")
+```
+
+```{ojs}
+//| echo: false
+regimes4ChromeFix = neutralizeScaledChrome("cr-regimes-4")
+```
+
+```{ojs}
+//| echo: false
+// data/headline.json — headline monthly inflation, data/panel_monthly.csv
+// column infl_headline (source comment in the file itself).
+headline = FileAttachment("data/headline.json").json()
+```
+
+```{ojs}
+//| echo: false
+// data/regimes.json — headline/core/crawl-band-rate monthly series + the
+// four regime-span boundaries (source comment in the file itself).
+regimes = FileAttachment("data/regimes.json").json()
+```
+
+```{ojs}
+//| echo: false
+// data/confidence.json — daily blue-gap, phase means, and real base/M2
+// indexed to 2023-12=100 (source comment in the file itself).
+confidence = FileAttachment("data/confidence.json").json()
+```
+
+```{ojs}
+//| echo: false
+// Hook event hairlines: dates are public record / already-verbatim steps.md
+// context (the devaluation magnitude "366→800" is steps.md's own figure,
+// data/panel_daily.csv event=caputo_deval); imf_band and indexed_band dates
+// are data/panel_daily.csv event=imf_band / phase-3 start. Not "plotted
+// numbers" themselves (a hairline has no y-value), so not held to the
+// per-number sourcing rule the series data is — see data/regimes.json's
+// own comment for the band-span sourcing.
+// labelDy staggers inauguration/devaluation, 2 days apart on a 4.5-year
+// axis — pixel-adjacent, so stacked rather than overlapping. Labels anchor
+// to the chart's bottom (labelAt: "bottom" below), not the top: the big
+// number rides the reveal head, which for the early hook stages sits right
+// at the Dec-2023 peak — the same top-of-chart region a top-anchored label
+// would occupy.
+hookEvents = ({
+  inauguration: { date: "2023-12-10", label: "Inauguration", labelDy: 22 },
+  devaluation: { date: "2023-12-12", label: "Devaluation: 366 → 800", labelDy: 38 },
+  imf_band: { date: "2025-04-11", label: "IMF band", labelDy: 22 },
+  indexed_band: { date: "2026-01-01", label: "Indexed band", labelDy: 22 },
+})
+```
+
+```{ojs}
+//| echo: false
+// The Politico-style opener: a muted full-length ghost line, a bold reveal
+// (area fill fading to transparent + thick stroke) up to `revealThrough`,
+// and event hairlines that accumulate one per hook stage. `t` floors at
+// 0.12 (critic fold-in item 4) so no stage ever opens on a blank axis.
+drawHook = function (w, revealThrough, activeEvents, t) {
+  const h = Math.round(w * 0.62);
+  // right: 24 was a constant regardless of w — fine at desktop widths
+  // (plenty of empty axis past the last hairline event), but at mobile
+  // widths the rightmost hairline label ("Indexed band", the longest
+  // event label) ran off the svg's own right edge (E5-fix1 measurement:
+  // pre-existing at the old 0.72rem chart-text size too, ~35px overflow
+  // at 390px, not something the width/font-size fix in this round
+  // introduced — widened here since the brief's verify step checks for
+  // clipping across all 14 PNGs).
+  const margin = { top: 40, right: w > 560 ? 24 : 78, bottom: 28, left: 16 };
+  const parseMonth = d3.utcParse("%Y-%m");
+  const parseDay = d3.utcParse("%Y-%m-%d");
+  const points = headline.labels
+    .map((l, i) => ({ date: parseMonth(l), value: headline.headline[i] }))
+    .filter((d) => d.value != null);
+  const x = d3.scaleUtc().domain(d3.extent(points, (d) => d.date)).range([margin.left, w - margin.right]);
+  const y = d3.scaleLinear().domain([0, d3.max(points, (d) => d.value)]).nice().range([h - margin.bottom, margin.top]);
+
+  const svg = d3.create("svg").attr("width", w).attr("height", h).attr("viewBox", [0, 0, w, h]);
+  // R1 item 4: <title>/<desc> per chart svg (charts.js untouched -- no
+  // shared helper needed, each drawer is a one-off insert).
+  svg.insert("desc", ":first-child").text("Monthly headline inflation, December 2023 through May 2026, revealed progressively as the hook scrolls.");
+  svg.insert("title", ":first-child").text("Headline monthly inflation");
+  // R1 fix round 1 (P3): a bare <title> on inline SVG isn't reliably
+  // announced by screen readers; role="img" + aria-label (mirroring the
+  // <title> text) is.
+  svg.attr("role", "img").attr("aria-label", "Headline monthly inflation");
+  charts.axes(d3, svg, { x, y, h, margin, xTicks: w > 600 ? 8 : 4, hideY: true });
+  svg.selectAll(".cr-axis-x text").attr("fill", "currentColor").attr("opacity", 0.55);
+  svg.selectAll(".cr-axis-x path, .cr-axis-x line").attr("stroke", "currentColor").attr("opacity", 0.25);
+
+  const cutoff = parseMonth(revealThrough);
+  const stopIdx = points.findIndex((d) => d.date > cutoff);
+  const through = stopIdx === -1 ? points : points.slice(0, stopIdx);
+  const px = through.map((d) => [x(d.date), y(d.value)]);
+  const drawn = charts.sliceTo(px, Math.max(0.12, Math.min(1, t)));
+  const currentValue = through[Math.max(0, drawn.length - 1)].value;
+  const fullGhost = points.map((d) => [x(d.date), y(d.value)]);
+
+  const accent = charts.cssVar("--accent", "#e2855f");
+  let ghost = svg.select("#cr-hook-ghost");
+  if (ghost.empty()) ghost = svg.append("path").attr("id", "cr-hook-ghost");
+  ghost.attr("d", d3.line()(fullGhost)).attr("fill", "none").attr("stroke", accent)
+    .attr("stroke-opacity", 0.18).attr("stroke-width", 1.5);
+
+  charts.areaUnder(d3, svg, drawn, h - margin.bottom, {
+    id: "cr-hook-area", fill: charts.fadeGradient(svg, "cr-hook-fade", accent),
+  });
+
+  let line = svg.select("#cr-hook-line");
+  if (line.empty()) line = svg.append("path").attr("id", "cr-hook-line");
+  line.attr("d", d3.line()(drawn)).attr("fill", "none").attr("stroke", accent).attr("stroke-width", 3);
+
+  const head = drawn[drawn.length - 1];
+  // y is fixed (not head[1]-tracking): the number still rides the line
+  // head horizontally, but a value-tracking y collided with the event
+  // hairlines from both sides — near the top for the Dec-2023 peak
+  // (stages 1-2), near the bottom for the May-2026 low print (stages 3-4),
+  // since hairline labels are bottom-anchored (below) for the first case.
+  // A fixed y keeps the number in one stable band regardless, which reads
+  // closer to Politico's own ticker-like placement anyway. margin.top + 76
+  // clears the Fraunces glyph's ~60px ascent at the 5rem clamp ceiling.
+  charts.bigNumber(svg, {
+    id: "cr-hook-number", x: head[0], y: margin.top + 76, value: currentValue,
+    t: 1, decimals: 2, suffix: "%", anchor: head[0] > w * 0.72 ? "end" : "start",
+  });
+
+  activeEvents.forEach((key) => {
+    const e = hookEvents[key];
+    charts.hairline(svg, {
+      id: `cr-hook-event-${key}`, x: x(parseDay(e.date)), y0: margin.top, y1: h - margin.bottom,
+      label: e.label, color: accent, active: true, labelAt: "bottom", labelDy: e.labelDy,
+    });
+  });
+
+  return svg.node();
+}
+```
+
+<!-- HOOK — Politico-style: full-bleed dark stage, chart draws + re-annotates
+     across four discrete stages (sticky-swap, one per trigger — E2 README
+     "scrolly + swap" mapping), big number at the line head, event hairlines
+     accumulating one per stage, trigger prose in the opaque dark mat. Data:
+     data/headline.json (source comment there). Prose: steps.md "The
+     promise", verbatim, all four paragraphs (the 3rd sentence of steps.md's
+     3rd paragraph becomes this hook's 4th, progress-block-wrapped trigger,
+     per SPEC.md E4's original split — unchanged by E5). -->
+
+:::{.cr-section .cr-hook layout="overlay-right"}
+
+:::{focus-on="cr-hook-1"}
+Monthly inflation ran at 25.5% in December 2023. Javier Milei had campaigned on three monetary commitments, each stated without qualification: dollarization of the economy, closure of the Banco Central de la República Argentina, and a deficit of zero. Days after the November 2023 runoff the office of the president-elect reaffirmed that the closure of the central bank "no es un asunto negociable." The inaugural address carried the fiscal pledge in three words, "no hay plata."
+:::
+
+:::{focus-on="cr-hook-2"}
+An economic argument sat beneath the rhetoric. Argentina had removed thirteen zeros from its currency across four reforms between 1969 and 1992, defaulted on sovereign debt nine times since independence, and entered 2023 with annual inflation above 200% and a central bank financing the Treasury directly. In that setting the promise amounted to credibility imported wholesale.
+:::
+
+:::{focus-on="cr-hook-3"}
+Neither institutional commitment survived. Four successive peso regimes arrived in their place, and monthly inflation printed 2.1% in May 2026.
+:::
+
+:::{.progress-block}
+:::{focus-on="cr-hook-4"}
+Three questions order the grade that follows: whether confidence in the peso returned, what anchored it, and whether the arrangement now in force can keep holding it.
+:::
+:::
+
+:::{#cr-hook-1 .cr-chart-full}
+```{ojs}
+//| echo: false
+drawHook(width, "2023-12", ["inauguration"], 1)
+```
+:::
+
+:::{#cr-hook-2 .cr-chart-full}
+```{ojs}
+//| echo: false
+drawHook(width, "2023-12", ["inauguration", "devaluation"], 1)
+```
+:::
+
+:::{#cr-hook-3 .cr-chart-full}
+```{ojs}
+//| echo: false
+drawHook(width, "2026-05", ["inauguration", "devaluation", "imf_band"], 1)
+```
+:::
+
+:::{#cr-hook-4 .cr-chart-full}
+```{ojs}
+//| echo: false
+drawHook(width, "2026-05", ["inauguration", "devaluation", "imf_band", "indexed_band"], 0.85 + 0.15 * crProgressBlock)
+```
+:::
+
+:::
+
+<!-- SCENE 01 — "Three regimes of inflation" (steps.md), live chart: headline
+     + core + crawl/band-rate lines with direct end labels (no legend), the
+     four regime spans as shaded bands lit one per trigger (matching
+     steps.md's own `highlight:` yaml hints exactly), trigger 4 draws the
+     dashed 2% floor and dims the crawl/band-rate series. Sticky-swap, four
+     stages. Data: data/regimes.json. -->
+
+<!-- R1 fix round 1 (F1/F2): kicker moved BEFORE the heading (was after,
+     duplicating it -- see the removed div below the fence) and its text
+     is now a short CATEGORY, not the headline itself. Wrapped in
+     `.cr-scene` -- Pandoc's `section-divs` closes a `section.level2` at
+     the NEXT heading, so content placed textually before a `##` (this
+     kicker) attaches to the PREVIOUS still-open section rather than this
+     one, breaking the sticky kicker's containing-block scoping (measured:
+     confirmed via elementFromPoint failing for confidence/scrub, whose
+     kickers landed as the LAST child of the PRECEDING scene's section).
+     `.cr-scene` gives kicker + heading + `.cr-section` one shared
+     containing block, scoped to exactly this scene. Verified this does
+     NOT break Quarto's full-bleed width propagation: `page-columns
+     page-full` classes (and `grid-column: screen-start/screen-end`) get
+     applied generically to EVERY ancestor up to `main`, including this
+     wrapper, not hard-coded to `section.level2` -- confirmed by
+     computed-style probe, width stays 100% at every nesting level. -->
+
+::: {.cr-scene}
+::: {.cr-kicker}
+Regimes
+:::
+
+## Three regimes of inflation
+
+```{ojs}
+//| echo: false
+// R1c (SPEC.md closeread-engine, P3): first param is now the {width,
+// height} object cardSize(id) returns, not a bare width -- `h` is the
+// exhibit panel's own MEASURED remaining height (brand.css
+// `.exhibit-chart{flex:1;min-height:0}`), replacing the old fixed
+// `Math.round(w * 0.66)` aspect ratio that starved a taller panel of
+// chart height it had room for. `h > 0` guards cardSize's own fallback
+// (it already returns a sane default when `.exhibit-chart` isn't
+// measurable yet) so a stray 0/undefined here can't collapse the chart
+// to nothing before the first real ResizeObserver tick.
+drawRegimes = function ({ width: w, height: hIn }, { activeBands = [], showFloor = false, dimRate = false, clipDomain = false, titleId, zoomScale = 1 } = {}) {
+  const h = hIn > 0 ? hIn : Math.round(w * 0.66);
+  // right: 58 in the narrow branch fit "Headline" (the one end label this
+  // drawer never abbreviates, unlike crawl_band_rate's "Band") at the old
+  // 0.72rem chart-text size; the E5-fix1 floor raise to 0.8rem made it
+  // clip by a few px at the card's now-correct rendered width (stickyWidth
+  // below) — widened, not abbreviated further, so the label stays what
+  // the brief's own verify table names ("Headline").
+  // R1c fix2 (H1 side-effect, found in this round's own screenshot review,
+  // not a critic finding): brand.css's `.exhibit-chart > *` zoom
+  // (`--exhibit-scale`) scales THIS drawer's whole svg about its own
+  // centre -- for cr-regimes-4's scale-by="1.15" that grows the right edge
+  // outward by ~(scale-1)/2 * w (~51px measured at w=685), clipping
+  // "Crawl/band rate" against `.exhibit-chart`'s own overflow:hidden even
+  // though it fit clean unzoomed (regimes-1/2/3). `zoomScale` (the SAME
+  // value passed as `--exhibit-scale` on the markup below, single source
+  // of truth) buys back exactly that much right-margin BEFORE the CSS
+  // zoom ever applies, so the end label has room to grow into instead of
+  // room to be cut. Only regimes-4 passes a value != 1 today.
+  const margin = { top: 20, right: (w > 560 ? 116 : 74) + Math.max(0, (zoomScale - 1) / 2) * w, bottom: 28, left: 38 };
+  const parseMonth = d3.utcParse("%Y-%m");
+  const parseDay = d3.utcParse("%Y-%m-%d");
+  // R1c fix2 (H4, critic P1): the Dec-2023 launch spike (headline 25.5%,
+  // core 28.3%) forces a 0-30 y-domain for every stage sharing this
+  // drawer, so stages 3-4's own 2.1-3.4% disinflation story renders in
+  // ~20px of a 600px plot even though the svg area itself cleared F2's
+  // floor. Stages 1-2 narrate the spike and the crawl that follows it, so
+  // they keep the full series; stages 3-4 narrate only the 2024-01+
+  // disinflation window (brief's own instruction), so `clipDomain` drops
+  // every point before it BEFORE computing the y-domain, letting it
+  // rescale to what's actually on screen — one continuous domain, no axis
+  // break. `pick`/`headline`/`core`/`crawlBandRate` keep every downstream
+  // array (bands' dodge points, the floor callout, the three series
+  // lines) aligned to the SAME (possibly shortened) `dates`, since a
+  // filtered `dates` with an UNFILTERED `regimes.headline` would silently
+  // pair each date with the wrong month's value.
+  const allDates = regimes.labels.map(parseMonth);
+  const clipFrom = clipDomain ? parseMonth("2024-01") : null;
+  const keepIdx = clipFrom
+    ? allDates.map((d, i) => (d >= clipFrom ? i : -1)).filter((i) => i >= 0)
+    : allDates.map((_, i) => i);
+  const pick = (arr) => keepIdx.map((i) => arr[i]);
+  const dates = pick(allDates);
+  // named *Series, not `headline`/`core` -- a TOP-LEVEL OJS cell elsewhere
+  // on the page already binds `headline` to data/headline.json (the hook
+  // scene); a same-named LOCAL const here is legal JS (function scope
+  // shadows it cleanly) but reads as a collision, so this drawer's own
+  // three arrays get their own names.
+  const headlineSeries = pick(regimes.headline);
+  const coreSeries = pick(regimes.core);
+  const crawlBandRateSeries = pick(regimes.crawl_band_rate);
+  const x = d3.scaleUtc().domain(d3.extent(dates)).range([margin.left, w - margin.right]);
+  const yMax = d3.max([...headlineSeries, ...coreSeries, ...crawlBandRateSeries].filter((v) => v != null));
+  const y = d3.scaleLinear().domain([0, yMax]).nice().range([h - margin.bottom, margin.top]);
+
+  const svg = d3.create("svg").attr("width", w).attr("height", h).attr("viewBox", [0, 0, w, h]);
+  // R1 item 4: <title>/<desc>.
+  svg.insert("desc", ":first-child").text("Monthly headline, core and crawl-or-band-rate inflation since December 2023, with the four regime spans shaded.");
+  svg.insert("title", ":first-child").text("Three regimes of inflation: headline, core, crawl/band rate");
+  // R1c fix2 (H6, critic P2): aria-labelledby the VISIBLE .exhibit-title
+  // text (by id) instead of a hardcoded aria-label string that duplicates
+  // it and can drift out of sync -- the fence has no lua-filter access to
+  // emit literal <figure>/<figcaption> tags from a pandoc fenced div, so
+  // the ARIA-role equivalent (this + the outer div's own role="figure"
+  // aria-labelledby, story.qmd markup) is the in-fence substitute; see
+  // the report for the full reasoning.
+  svg.attr("role", "img").attr("aria-labelledby", titleId);
+  charts.axes(d3, svg, { x, y, h, margin, xTicks: w > 600 ? 7 : 4, yTicks: 5 });
+
+  const amber = charts.cssVar("--k-amber", "#ba7517");
+  const inkSoft = charts.cssVar("--ink-soft", "#57534e");
+  // R1 fix round 2 (G7, critic P2): crawl_1pct is a ~2-month span — even
+  // left-aligned, its full label overflows a narrow chart, but abbreviating
+  // "IMF band" to bare "IMF" (previously below ~560px) reads as the same
+  // "band" vocabulary the crawl/band-rate SERIES end label also uses --
+  // two different chart objects both truncating into an ambiguous single
+  // word right where the chart is smallest. Full label always kept now;
+  // `charts.band`'s own `wrap` wraps it onto two tspan lines when narrow
+  // instead of dropping words.
+  regimes.bands.forEach((b) => {
+    charts.band(svg, {
+      id: `cr-regimes-band-${b.key}`, x0: x(parseDay(b.start)), x1: x(parseDay(b.end)),
+      y0: margin.top, y1: h - margin.bottom, color: amber,
+      label: b.label, wrap: w <= 560,
+      active: activeBands.includes(b.key),
+    });
+    if (w <= 560) svg.select(`#cr-regimes-band-${b.key} text`).attr("font-size", "0.62rem");
+  });
+
+  if (showFloor) {
+    const fy = y(regimes.floor_value);
+    svg.append("line").attr("x1", margin.left).attr("x2", w - margin.right).attr("y1", fy).attr("y2", fy)
+      .attr("stroke", inkSoft).attr("stroke-width", 1).attr("stroke-dasharray", "4,4");
+    // R1 fix round 2 (G4, critic P2): F5's path-dodge (confidence drawer
+    // only) left this callout crossed by its own line -- 13x @390, 4x
+    // @1024, 3x @1440, headline printing right at ~2% by May 2026 puts the
+    // series directly through the label's glyph box. Same treatment: real
+    // pixel-space points (all three series -- headline/core/crawl_band_rate
+    // all draw near the floor at this stage, `dimRate` doesn't stop the
+    // rate series from still being ABLE to cross it, just dims it), each
+    // `densify`d (see charts.densify's own comment on why -- monthly
+    // vertices are sparse enough to hide a mid-segment crossing) before the
+    // real x/y search.
+    //
+    // Fix round 2, second pass (residual 6x@390/3x@1440 after the series
+    // fix above): the real culprit wasn't a data series at all -- it was
+    // this chart's own Y-AXIS domain line (`charts.axes`'s `d3.axisLeft`
+    // draws a `<path class="domain">` vertical rule at x=margin.left,
+    // full chart height). The callout's `anchor:"start"` box starts
+    // EXACTLY at x=margin.left, so its left edge sits right on top of
+    // that axis rule regardless of which series are/aren't nearby --
+    // `dodgeFromPath` never saw it because only the three data series were
+    // ever fed into `floorPts`. Add both axis domain lines (y-axis
+    // vertical + x-axis horizontal, built from the same margin/h/w this
+    // function already has, not queried from the DOM) as extra dodge
+    // points so the search steps the label clear of the axis itself, not
+    // just the data.
+    const toPx = (arr) => charts.densify(
+      dates.map((d, i) => [d, arr[i]]).filter((p) => p[1] != null).map(([d, v]) => [x(d), y(v)])
+    );
+    const axisPts = [
+      ...charts.densify([[margin.left, margin.top], [margin.left, h - margin.bottom]]),
+      ...charts.densify([[margin.left, h - margin.bottom], [w - margin.right, h - margin.bottom]]),
+    ];
+    // R1c: a THIRD dodge point set, the x-axis's own first TICK TEXT row --
+    // `charts.axes`'s `d3.axisBottom` (called above) draws "2022" centred
+    // on `margin.left` (nudged +10px by the G3 fix) at roughly
+    // `h - margin.bottom + 3` to `+ 20`. `dodgeFromPath`'s existing
+    // `floorPts` only ever knew about SERIES lines and the axis DOMAIN
+    // lines (G4's own fix, comment above) -- never the tick TEXT itself,
+    // which `d3.axisBottom` draws independently and no dodge helper here
+    // can see without being told. R1c's shorter panel at narrow widths
+    // (measured height now comes from the exhibit panel's own flex layout,
+    // not a fixed w*0.66 aspect -- see `cardSize`/P3) leaves `fy` closer to
+    // the axis than before, exposing a collision this synthetic zone never
+    // needed to guard against while the old fixed aspect kept more
+    // clearance by construction. A small rectangle around the tick's own
+    // rendered box, densified the same way the axis lines above are, so
+    // `dodgeFromPath`'s point-in-box search treats it as occupied exactly
+    // like a real path segment. */
+    const tickTextPts = charts.densify([
+      [margin.left - 10, h - margin.bottom + 2],
+      [margin.left + 50, h - margin.bottom + 2],
+      [margin.left + 50, h - margin.bottom + 24],
+      [margin.left - 10, h - margin.bottom + 24],
+      [margin.left - 10, h - margin.bottom + 2],
+    ], 4);
+    const floorPts = [...toPx(headlineSeries), ...toPx(coreSeries), ...toPx(crawlBandRateSeries), ...axisPts, ...tickTextPts];
+    const { x: fx, y: fyDodged } = charts.dodgeFromPath(margin.left, fy - 6, floorPts, {
+      boxW: "~2% floor".length * 7.5, anchor: "start",
+    });
+    svg.append("text").attr("class", "cr-end-label").attr("x", fx).attr("y", fyDodged)
+      .attr("fill", inkSoft).text("~2% floor");
+  }
+
+  // R1 fix round 2 (G7): "Crawl/band rate" no longer truncates to "Band"
+  // below 560px -- see the band-label comment above for why bare "Band"
+  // (this series' short form) was ambiguous next to the shaded regime
+  // spans' own "band" vocabulary. `wrap` (below, at the endLabel call)
+  // wraps the full string instead.
+  const series = [
+    { key: "headline", label: "Headline", color: charts.cssVar("--k-crimson", "#a32d2d"), data: headlineSeries, dim: false, w: 3 },
+    { key: "core", label: "Core", color: charts.cssVar("--ink", "#1c1917"), data: coreSeries, dim: false, w: 2 },
+    { key: "crawl_band_rate", label: "Crawl/band rate", color: charts.cssVar("--k-blue", "#185fa5"), data: crawlBandRateSeries, dim: dimRate, w: 2 },
+  ];
+  const lineGen = d3.line().defined((d) => d[1] != null).x((d) => x(d[0])).y((d) => y(d[1]));
+  const ends = [];
+  for (const s of series) {
+    const pts = dates.map((d, i) => [d, s.data[i]]);
+    svg.append("path").datum(pts).attr("fill", "none").attr("stroke", s.color)
+      .attr("stroke-width", s.w).attr("opacity", s.dim ? 0.25 : 1).attr("d", lineGen);
+    const idxs = s.data.map((v, i) => (v != null ? i : -1)).filter((i) => i >= 0);
+    const lastIdx = idxs[idxs.length - 1];
+    if (lastIdx != null) ends.push({ ...s, x: x(dates[lastIdx]), y: y(s.data[lastIdx]) });
+  }
+  // the three series end within a few % of each other (2.15/1.9/3.38) —
+  // close enough in y that a 13px baseline gap still let adjacent label
+  // bboxes touch (E5 fix round 2 measurement: ~17px real bbox height at
+  // 0.8rem on Space Grotesk). charts.dodgeY enforces an 18px minimum
+  // centre-to-centre gap instead; a leader tick reconnects a label to its
+  // series' true end point once dodging has moved it more than about one
+  // line (18px) away from where it naturally sits, so three near-equal
+  // ends don't collapse into an unkeyed, unattributable stack.
+  // R1 fix round 2 (G7 follow-on): below 560px "Crawl/band rate" now wraps
+  // to 2 tspan lines (~34px tall) instead of truncating to "Band" (~17px
+  // tall, single line) -- the 18px minGap tuned for 3 single-line labels
+  // left the now-taller wrapped label crossing "Headline" by up to 8px
+  // (measured). Doubling the gap at the same width the wrap engages
+  // covers the wrapped label's real height; the other two (never wrap,
+  // "Headline"/"Core" are both short) just get extra breathing room.
+  // R1c fix2 (H7 / R1b's carried-over P1): pass the plot's own vertical
+  // bounds so `dodgeY` can no longer walk the third label off the bottom
+  // of the svg when three end-of-series values are close together at a
+  // narrow height ("Core" was silently absent below 560px) -- see
+  // `dodgeY`'s own comment for the compress-then-shift mechanics.
+  const dodged = charts.dodgeY(ends, w <= 560 ? 36 : 18, { min: margin.top, max: h - margin.bottom });
+  dodged.forEach((s) => {
+    charts.endLabel(svg, { id: `cr-regimes-endlabel-${s.key}`, x: s.x, y: s.y, text: s.label, color: s.color, wrap: w <= 560 })
+      .attr("opacity", s.dim ? 0.4 : 1);
+    let leader = svg.select(`#cr-regimes-leader-${s.key}`);
+    if (Math.abs(s.dy) > 18) {
+      if (leader.empty()) leader = svg.append("line").attr("id", `cr-regimes-leader-${s.key}`);
+      leader.attr("x1", s.x).attr("y1", s.y0).attr("x2", s.x + 6).attr("y2", s.y)
+        .attr("stroke", s.color).attr("stroke-width", 1).attr("opacity", s.dim ? 0.25 : 0.5);
+    } else if (!leader.empty()) {
+      leader.remove();
+    }
+  });
+  return svg.node();
+}
+```
+
+:::{.cr-section layout="sidebar-left"}
+
+:::{focus-on="cr-regimes-1"}
+Two days after the inauguration the monetary program began. On 12 December 2023 the economy ministry under Luis Caputo moved the official rate from 366 to 800 pesos per dollar, a step of 118%, committed the central bank to a <span class="k" data-key="blue">crawling peg</span> of 2% per month, and pledged that the bank would extend no new financing to the Treasury. That crawl ran unbroken through January 2025. From 1 February 2025 it slowed to 1% per month.
+:::
+
+:::{focus-on="cr-regimes-2"}
+On 11 April 2025 the IMF approved a 48-month Extended Fund Facility of about USD 20bn. The same day the central bank replaced the crawl with a band of 1,000 to 1,400 pesos per dollar, eliminated the exporter blend rate, and lifted the cepo for individuals. Reserve-accumulation targets were missed, recorded as such in the Fund's own review.
+:::
+
+:::{focus-on="cr-regimes-3"}
+On 1 January 2026 the current regime entered force. Indexation is its defining feature: the band's maximal monthly depreciation at month T equals headline CPI inflation at month T−2. Permitted depreciation widened from 2.5% in January 2026 to 3.4% in May while <span class="k" data-key="crimson">headline inflation</span> fell from 2.9% to 2.1%. A band that widens during disinflation is the procyclical loosening indexation implies.
+:::
+
+:::{focus-on="cr-regimes-4" scale-by="1.15"}
+<span class="k" data-key="crimson">Headline inflation</span> has printed at or above 2% in every month since September 2025, nine consecutive prints. Real transactional balances remain below where they stood at the start of the program. The <span class="k" data-key="actual">core</span> print of 1.9% in May is the first below that line. Disinflation that stalls at a 2% floor while the nominal anchor moves with lagged prices is a different object from disinflation that converges.
+:::
+
+:::{#cr-regimes-1 role="figure" aria-labelledby="cr-regimes-1-title"}
+::: {.exhibit-title #cr-regimes-1-title}
+Monthly inflation
+:::
+::: {.exhibit-chart}
+```{ojs}
+//| echo: false
+regimes1Size = cardSize("cr-regimes-1")
+drawRegimes(regimes1Size, { activeBands: ["crawl_2pct", "crawl_1pct"], titleId: "cr-regimes-1-title" })
+```
+:::
+::: {.exhibit-caption}
+The crawl steps the official rate 2% a month, then 1% from February 2025, while headline runs well above it.
+:::
+::: {.exhibit-source}
+Source: INDEC monthly CPI (headline, core); crawl schedule per published BCRA rate changes.
+:::
+:::
+
+:::{#cr-regimes-2 role="figure" aria-labelledby="cr-regimes-2-title"}
+::: {.exhibit-title #cr-regimes-2-title}
+Monthly inflation
+:::
+::: {.exhibit-chart}
+```{ojs}
+//| echo: false
+regimes2Size = cardSize("cr-regimes-2")
+drawRegimes(regimes2Size, { activeBands: ["imf_band"], titleId: "cr-regimes-2-title" })
+```
+:::
+::: {.exhibit-caption}
+The IMF band replaces the crawl on 11 April 2025, ending the fixed monthly step.
+:::
+::: {.exhibit-source}
+Source: INDEC monthly CPI (headline, core); crawl schedule per published BCRA rate changes.
+:::
+:::
+
+:::{#cr-regimes-3 role="figure" aria-labelledby="cr-regimes-3-title"}
+::: {.exhibit-title #cr-regimes-3-title}
+Monthly inflation
+:::
+::: {.exhibit-chart}
+```{ojs}
+//| echo: false
+regimes3Size = cardSize("cr-regimes-3")
+drawRegimes(regimes3Size, { activeBands: ["indexed_band"], clipDomain: true, titleId: "cr-regimes-3-title" })
+```
+:::
+::: {.exhibit-caption}
+From January 2026 the band's own width follows lagged headline CPI — the indexed regime.
+:::
+::: {.exhibit-source}
+Source: INDEC monthly CPI (headline, core); crawl schedule per published BCRA rate changes.
+:::
+:::
+
+:::{#cr-regimes-4 role="figure" aria-labelledby="cr-regimes-4-title"}
+::: {.exhibit-title #cr-regimes-4-title}
+Monthly inflation
+:::
+::: {.exhibit-chart style="--exhibit-scale: 1.15;"}
+```{ojs}
+//| echo: false
+regimes4Size = cardSize("cr-regimes-4")
+drawRegimes(regimes4Size, { activeBands: ["indexed_band"], showFloor: true, dimRate: true, clipDomain: true, titleId: "cr-regimes-4-title", zoomScale: 1.15 })
+```
+:::
+::: {.exhibit-caption}
+Headline holds at or above 2% for nine straight months; core dips to 1.9% in May.
+:::
+::: {.exhibit-source}
+Source: INDEC monthly CPI (headline, core); crawl schedule per published BCRA rate changes.
+:::
+:::
+
+:::
+:::
+
+<!-- SCENE 02 — "Confidence returned" (steps.md), live charts: the daily
+     blue-gap line with the four phase means as horizontal segments +
+     numbers (stage 1), the Caputo devaluation hairline (stage 2), then a
+     crossfade — sticky-swap, same mechanic as scene 01 — to real base vs
+     real M2 indexed to 2023-12=100 (stages 3-4), stage 4 dimming base and
+     lighting M2. Data: data/confidence.json (comment there covers the
+     "index to 2023-12=100 yourself" instruction). -->
+
+<!-- R1 fix round 1 (F1/F2): kicker before heading, short category text,
+     `.cr-scene` wrapper -- see the regimes scene's comment above for why. -->
+
+::: {.cr-scene}
+::: {.cr-kicker}
+Confidence
+:::
+
+## Confidence returned
+
+```{ojs}
+//| echo: false
+// R1c (SPEC.md closeread-engine, P3): {width, height} object from
+// cardSize(id), same rationale as drawRegimes above.
+drawConfidenceGap = function ({ width: w, height: hIn }, { showDeval = false, titleId } = {}) {
+  const h = hIn > 0 ? hIn : Math.round(w * 0.62);
+  const margin = { top: 20, right: w > 560 ? 84 : 46, bottom: 28, left: 40 };
+  const parseDay = d3.utcParse("%Y-%m-%d");
+  const dates = confidence.daily_dates.map(parseDay);
+  const x = d3.scaleUtc().domain(d3.extent(dates)).range([margin.left, w - margin.right]);
+  const y = d3.scaleLinear().domain([0, d3.max(confidence.daily_gap_blue)]).nice().range([h - margin.bottom, margin.top]);
+
+  const svg = d3.create("svg").attr("width", w).attr("height", h).attr("viewBox", [0, 0, w, h]);
+  // R1 item 4: <title>/<desc>.
+  svg.insert("desc", ":first-child").text("Daily blue-dollar parallel-market premium over the official rate, with the four phase averages overlaid.");
+  svg.insert("title", ":first-child").text("Parallel-market premium");
+  // R1c fix2 (H6): see drawRegimes' own comment on this line.
+  svg.attr("role", "img").attr("aria-labelledby", titleId);
+  charts.axes(d3, svg, { x, y, h, margin, xTicks: w > 600 ? 7 : 4, yTicks: 5 });
+
+  const blue = charts.cssVar("--k-blue", "#185fa5");
+  const crimson = charts.cssVar("--k-crimson", "#a32d2d");
+  const lineGen = d3.line().x((d, i) => x(dates[i])).y((d) => y(d));
+  const bluePts = dates.map((d, i) => [x(d), y(confidence.daily_gap_blue[i])]);
+  svg.append("path").datum(confidence.daily_gap_blue).attr("fill", "none").attr("stroke", blue)
+    .attr("stroke-width", 1.5).attr("opacity", 0.85).attr("d", lineGen);
+
+  // R1 item 8 (critic P2, R1 fix round 1 F4/F5): the last two phases'
+  // means (2.1%, 1.4%) sit close enough in y that their end-of-segment
+  // labels crowded/overlapped bottom-right at 390, and — new at this
+  // round — "2.1%" collided with the "2026" x-axis tick text below it
+  // (the low phase-mean value maps close to the axis line at narrow
+  // chart heights) and with the noisy blue series itself. The horizontal
+  // segment stays at its true data y (meanSegment's `y`); only the label
+  // moves. `axisTickAnchor` is a `fixed` dodgeY entry standing in for the
+  // x-axis tick row charts.axes() draws (d3.axisBottom's own text isn't
+  // known to this function otherwise) — d3's default tickPadding (3) +
+  // ~0.71em baseline offset puts tick text center roughly 12px below the
+  // axis line. Y-spacing (dodgeY) keeps labels off both each other AND
+  // the axis; X-spacing (dodgeFromPath, against the actual drawn blue
+  // series points) keeps them off the data line — halo alone (brand.css)
+  // isn't enough per the brief, since it doesn't move the real geometry.
+  const axisTickAnchor = { key: "axis", fixed: true, y: h - margin.bottom + 12 };
+  const meanAnchors = confidence.phases.map((p, i) => ({
+    i, x0: x(parseDay(p.start)), x1: x(parseDay(p.end)), y: y(p.mean), value: p.mean,
+  }));
+  const dodgedMeans = charts.dodgeY([...meanAnchors, axisTickAnchor], 20).filter((d) => d.key !== "axis");
+  dodgedMeans.forEach((p) => {
+    // boxW ~40: "100.9%" (the widest phase mean this chart renders) at
+    // 0.8rem Space Grotesk, text-anchor start (d3's default, unset by
+    // meanSegment) -- the box has to cover the FULL rendered width from
+    // its left-anchored x, not be centred on it (an earlier version
+    // centred the check and missed most of a longer label's real bbox).
+    const { dx, dy } = charts.dodgeFromPath(p.x1 + 6, p.y, bluePts, { boxW: 40, anchor: "start" });
+    charts.meanSegment(svg, {
+      id: `cr-confidence-mean-${p.i}`, x0: p.x0, x1: p.x1, y: p.y0, labelY: p.y, labelDx: dx, labelDy: dy,
+      value: p.value, color: blue, active: true, decimals: 1,
+    });
+  });
+
+  if (showDeval) {
+    charts.hairline(svg, {
+      id: "cr-confidence-deval", x: x(parseDay(confidence.deval_date)), y0: margin.top, y1: h - margin.bottom,
+      label: "Devaluation", color: crimson, active: true,
+    });
+  }
+
+  return svg.node();
+}
+```
+
+```{ojs}
+//| echo: false
+// R1c (SPEC.md closeread-engine, P3): {width, height} object from
+// cardSize(id), same rationale as drawRegimes above.
+drawConfidenceBalances = function ({ width: w, height: hIn }, { emphasizeM2 = false, titleId } = {}) {
+  const h = hIn > 0 ? hIn : Math.round(w * 0.62);
+  // right: "Real base 137.7" (the unabbreviated wide-branch label) was
+  // clipping by a few px even at 96 pre-fix (E5-fix1 measurement, present
+  // before this round's width/font-size changes too); widened both
+  // branches rather than shortening the label further.
+  const margin = { top: 20, right: w > 560 ? 112 : 80, bottom: 28, left: 40 };
+  const parseMonth = d3.utcParse("%Y-%m");
+  const dates = confidence.monthly_labels.map(parseMonth);
+  const x = d3.scaleUtc().domain(d3.extent(dates)).range([margin.left, w - margin.right]);
+  const vals = [...confidence.real_base_idx, ...confidence.real_m2_idx].filter((v) => v != null);
+  const y = d3.scaleLinear().domain([d3.min(vals) * 0.95, d3.max(vals) * 1.05]).range([h - margin.bottom, margin.top]);
+
+  const svg = d3.create("svg").attr("width", w).attr("height", h).attr("viewBox", [0, 0, w, h]);
+  // R1 item 4: <title>/<desc>.
+  svg.insert("desc", ":first-child").text("Real monetary base and real M2, indexed to December 2023 = 100.");
+  svg.insert("title", ":first-child").text("Real monetary base and M2");
+  // R1c fix2 (H6): see drawRegimes' own comment on this line.
+  svg.attr("role", "img").attr("aria-labelledby", titleId);
+  charts.axes(d3, svg, { x, y, h, margin, xTicks: w > 600 ? 6 : 4, yTicks: 5 });
+
+  const inkSoft = charts.cssVar("--ink-soft", "#57534e");
+  svg.append("line").attr("x1", margin.left).attr("x2", w - margin.right).attr("y1", y(100)).attr("y2", y(100))
+    .attr("stroke", inkSoft).attr("stroke-dasharray", "3,3").attr("opacity", 0.6);
+
+  const blue = charts.cssVar("--k-blue", "#185fa5");
+  const green = charts.cssVar("--k-green", "#1d9e75");
+  const lineGen = d3.line().defined((d) => d[1] != null).x((d) => x(d[0])).y((d) => y(d[1]));
+
+  const basePts = dates.map((d, i) => [d, confidence.real_base_idx[i]]);
+  const m2Pts = dates.map((d, i) => [d, confidence.real_m2_idx[i]]);
+  svg.append("path").datum(basePts).attr("fill", "none").attr("stroke", blue)
+    .attr("stroke-width", emphasizeM2 ? 1.5 : 2.5).attr("opacity", emphasizeM2 ? 0.3 : 1).attr("d", lineGen);
+  svg.append("path").datum(m2Pts).attr("fill", "none").attr("stroke", green)
+    .attr("stroke-width", emphasizeM2 ? 2.5 : 1.5).attr("opacity", emphasizeM2 ? 1 : 0.5).attr("d", lineGen);
+
+  const lastBase = confidence.real_base_idx[confidence.real_base_idx.length - 1];
+  const lastM2 = confidence.real_m2_idx[confidence.real_m2_idx.length - 1];
+  const baseLabel = w > 560 ? `Real base ${lastBase}` : `Base ${lastBase}`;
+  const m2Label = w > 560 ? `Real M2 ${lastM2}` : `M2 ${lastM2}`;
+  charts.endLabel(svg, { x: x(dates[dates.length - 1]), y: y(lastBase), text: baseLabel, color: blue })
+    .attr("opacity", emphasizeM2 ? 0.4 : 1);
+  charts.endLabel(svg, { x: x(dates[dates.length - 1]), y: y(lastM2), text: m2Label, color: green });
+
+  // R1 item 8 (critic P2, R1 fix round 1 F4/F5): "Dec 2023 = 100" and the
+  // "78.7" trough callout still overlapped at 390 -- both are left-of-
+  // centre annotations that land close in y once the chart's height
+  // compresses at narrow widths, and the 15px minGap wasn't clearing
+  // Space Grotesk's real ~17px bbox height at that width. Also new this
+  // round: "78.7" was crossed by the Real-M2 companion line (path-sample
+  // hits inside the glyph box). Route the trough/peak pair (steps.md
+  // "Confidence returned" 3rd para) through charts.dodgeY at the raised
+  // default minGap (20) plus a fixed axis-tick guard entry (same pattern
+  // as drawConfidenceGap above, see its comment for why the guard is
+  // needed), then dodgeFromPath each one off BOTH series' actual drawn
+  // points (either line can cross a trough/peak callout depending on
+  // which one it annotates). The gridline label ("Dec 2023 = 100") is
+  // handled separately below, outside this batch -- see its own comment.
+  const axisTickAnchor = { key: "axis", fixed: true, y: h - margin.bottom + 12 };
+  // R1 fix round 1 (F5), bug found in verify: `basePts`/`m2Pts` above are
+  // DATA space (Date objects + raw index values, e.g. `[Date, 236.5]`) --
+  // exactly what `lineGen`'s own `.x()`/`.y()` accessors expect, but NOT
+  // pixel coordinates. Feeding them straight to dodgeFromPath compared a
+  // raw index value against a pixel y and (correctly, given garbage
+  // input) almost never found a "collision", so two rounds of this fix
+  // silently no-opped. Map through the SAME x/y scales the path itself
+  // uses, then `densify` (monthly points leave wide gaps a label can sit
+  // inside without any single vertex being close -- see `densify`'s own
+  // comment in charts.js) before the real check.
+  const basePxPts = charts.densify(dates.map((d, i) => [x(d), y(confidence.real_base_idx[i])]).filter((p) => !Number.isNaN(p[1])));
+  const m2PxPts = charts.densify(dates.map((d, i) => [x(d), y(confidence.real_m2_idx[i])]).filter((p) => !Number.isNaN(p[1])));
+  const seriesPts = [...basePxPts, ...m2PxPts];
+
+  // R1 fix round 1, fourth pass (F5): "Dec 2023 = 100" kept failing the
+  // real path-sample check no matter how far dodgeFromPath's x-search
+  // pushed it -- root cause found via direct DOM measurement, not another
+  // guess: both series are INDEXED to 100 at Dec 2023, so they both start
+  // at value~100 at the SAME x (margin.left) the gridline label anchors
+  // to. That is not a graze an x/y nudge can clear inside the plot area --
+  // any x shift that stays on-canvas is still under the twin line-starts,
+  // and every off-canvas shift tried instead put the ~100px-wide label
+  // over the y-axis ticks (new F4 text-text hit). The label is describing
+  // the GRIDLINE, not a data point, so it does not need to sit inside the
+  // plot at all -- moved to the top margin band (y = margin.top - 6,
+  // above where any path point can ever be drawn) where it is clear of
+  // both series by construction, no search required. It stays out of the
+  // dodgeY/dodgeFromPath batch below entirely.
+  // R1 fix round 2 (G9, critic P3): suppressed below 640px (brand.css
+  // `.cr-index-note`) -- at 390 this note sits 134px above its own
+  // gridline on a 197px-tall plot (9% of the chart), restating what the
+  // adjacent paragraph already states verbatim. Kept at >=640px, where the
+  // critic's own read is that it's a legitimate index-base note, not a
+  // compromise.
+  svg.append("text").attr("class", "cr-end-label cr-index-note").attr("text-anchor", "start")
+    .attr("x", margin.left).attr("y", margin.top - 6)
+    .attr("fill", inkSoft).attr("opacity", 1).text("Dec 2023 = 100");
+
+  const calloutAnchors = [];
+  [["2024-03", blue], ["2025-08", blue]].forEach(([lbl, color]) => {
+    const i = confidence.monthly_labels.indexOf(lbl);
+    if (i < 0) return;
+    calloutAnchors.push({
+      key: lbl, x: x(dates[i]), y: y(confidence.real_base_idx[i]) - 10,
+      anchor: "middle", color, text: String(confidence.real_base_idx[i]),
+      opacity: emphasizeM2 ? 0.4 : 1,
+    });
+  });
+  charts.dodgeY([...calloutAnchors, axisTickAnchor], 20).filter((d) => d.key !== "axis").forEach((a) => {
+    // boxW per label's own text length (~7.5px/char at 0.8rem Space
+    // Grotesk) -- "Dec 2023 = 100" (~100px) needs a much wider check than
+    // "78.7" (~30px); a fixed box undershot the longer label's real bbox
+    // and left 9-17 path-sample hits after an earlier attempt at this fix.
+    const { x: dodgedX, y: dodgedY } = charts.dodgeFromPath(a.x, a.y, seriesPts, { boxW: a.text.length * 7.5, anchor: a.anchor });
+    svg.append("text").attr("class", "cr-end-label").attr("text-anchor", a.anchor)
+      .attr("x", dodgedX).attr("y", dodgedY)
+      .attr("fill", a.color).attr("opacity", a.opacity).text(a.text);
+  });
+
+  return svg.node();
+}
+```
+
+:::{.cr-section layout="sidebar-left"}
+
+:::{focus-on="cr-confidence-1"}
+Among the confidence statistics the parallel-market premium is the most legible. The <span class="k" data-key="blue">blue gap</span> averaged above 100% across 2022 and 2023 and now trades within about 1% of the official rate. Across the four phases its means run 100.9%, 27.6%, 2.1%, and 1.4%. One qualification attaches: corporate capital controls were still partly in force at the vintage, so some of the narrowing is a shrinking arbitrage window rather than a fall in the demand for dollars.
+:::
+
+:::{focus-on="cr-confidence-2" scale-by="1.3" pan-to="-15%,0%"}
+That collapse starts at the devaluation of 12 December 2023, marked here, and continues through the IMF band of April 2025 and the indexed band of January 2026. That premium is the price of evading the currency, and its move from triple digits to near parity is the market's verdict that holding pesos no longer carries a confiscation discount.
+:::
+
+:::{focus-on="cr-confidence-3" scale-by="1"}
+Money balances tell a more textured story. Indexed to 100 at December 2023, the <span class="k" data-key="blue">real monetary base</span> fell to a trough of 78.7 in March 2024, climbed to 183.2 in August 2025, and stood at 137.7 in May 2026. Part of that is mechanical: the July 2024 LEFI migration shifted sterilized liquidity into the base, so the raw index overstates the behavioral recovery.
+:::
+
+:::{focus-on="cr-confidence-4" scale-by="1"}
+<span class="k" data-key="green">Real transactional M2</span> remains below its starting level, at 95.3 in May. The narrow base recovered and the broad aggregate did not, and the asymmetry is the hinge of the reading. Obstfeld's semi-elasticity near −0.12 replicates at −0.125 and extends to −0.113 on the locked vintage, while the same specification on M2 returns an insignificant +0.050. The levels money-demand relation fails a cointegration test, so the levels elasticity is a conditional correlation.
+:::
+
+:::{#cr-confidence-1 role="figure" aria-labelledby="cr-confidence-1-title"}
+::: {.exhibit-title #cr-confidence-1-title}
+Parallel-market premium
+:::
+::: {.exhibit-chart}
+```{ojs}
+//| echo: false
+confidence1Size = cardSize("cr-confidence-1")
+drawConfidenceGap(confidence1Size, { titleId: "cr-confidence-1-title" })
+```
+:::
+::: {.exhibit-caption}
+The blue-dollar premium averages 100.9% in 2022–23 and falls to near parity by 2026.
+:::
+::: {.exhibit-source}
+Source: BCRA official rate (A3500) vs Bluelytics blue-market rate, daily.
+:::
+:::
+
+:::{#cr-confidence-2 role="figure" aria-labelledby="cr-confidence-2-title"}
+::: {.exhibit-title #cr-confidence-2-title}
+Parallel-market premium
+:::
+::: {.exhibit-chart style="--exhibit-scale: 1.3; --exhibit-pan-x: -15%;"}
+```{ojs}
+//| echo: false
+confidence2Size = cardSize("cr-confidence-2")
+drawConfidenceGap(confidence2Size, { showDeval: true, titleId: "cr-confidence-2-title" })
+```
+:::
+::: {.exhibit-caption}
+The 12 December 2023 devaluation opens the collapse in the premium.
+:::
+::: {.exhibit-source}
+Source: BCRA official rate (A3500) vs Bluelytics blue-market rate, daily.
+:::
+:::
+
+:::{#cr-confidence-3 role="figure" aria-labelledby="cr-confidence-3-title"}
+::: {.exhibit-title #cr-confidence-3-title}
+Real monetary base and M2
+:::
+::: {.exhibit-chart}
+```{ojs}
+//| echo: false
+confidence3Size = cardSize("cr-confidence-3")
+drawConfidenceBalances(confidence3Size, { titleId: "cr-confidence-3-title" })
+```
+:::
+::: {.exhibit-caption}
+Real monetary base troughs at 78.7 in March 2024 before recovering to 137.7.
+:::
+::: {.exhibit-source}
+Source: BCRA real monetary base and M2, indexed to Dec 2023 = 100 by this analysis.
+:::
+:::
+
+:::{#cr-confidence-4 role="figure" aria-labelledby="cr-confidence-4-title"}
+::: {.exhibit-title #cr-confidence-4-title}
+Real monetary base and M2
+:::
+::: {.exhibit-chart}
+```{ojs}
+//| echo: false
+confidence4Size = cardSize("cr-confidence-4")
+drawConfidenceBalances(confidence4Size, { emphasizeM2: true, titleId: "cr-confidence-4-title" })
+```
+:::
+::: {.exhibit-caption}
+Real M2 remains below its starting level at 95.3 — the base recovered, M2 did not.
+:::
+::: {.exhibit-source}
+Source: BCRA real monetary base and M2, indexed to Dec 2023 = 100 by this analysis.
+:::
+:::
+
+:::
+:::
+
+<!-- SCENE 03 — the scrub scene, restyled to the shared live-chart grammar:
+     area fill under the scrubbing headline line (fading, via
+     charts.areaUnder + fadeGradient), a core end label, and a big number —
+     same mechanic as the hook, same charts.js primitives, no more inline
+     RAW literal (reuses `regimes`, already loaded once above, so there is
+     one source of truth for the headline/core series on the whole page
+     instead of two copies drifting apart). Trigger prose: steps.md "Three
+     regimes of inflation", 3rd and 4th paragraphs — SPEC.md E4 replaced the
+     spike's two Claude-written UI lines with these so no Claude prose
+     remains on the page; unchanged by E5. -->
+
+<!-- R1 fix round 1 (F1/F2): kicker before heading, short category text,
+     `.cr-scene` wrapper -- see the regimes scene's comment for why. -->
+
+::: {.cr-scene}
+::: {.cr-kicker}
+The scrub
+:::
+
+## Scrub the headline print
+
+<!-- R1 fix round 2 (G2, critic P1): `.cr-mat-bottom` (brand.css) at <=640px
+     top-aligns the pinned CHART within its sticky area (instead of moving
+     the card) so it structurally clears the card wherever the card
+     naturally settles, and also clears pointer-events on the surrounding
+     trigger/narrative-col boxes so `elementFromPoint` reaches the chart's
+     own text again -- see brand.css's own comment on this class for the
+     full writeup, including the sticky-narrative approach tried and
+     reverted. Scoped to this scene only; the hook (same overlay-right +
+     cr-chart-full combination) has no occlusion complaint and stays
+     untouched (F1/F3, closed). -->
+:::{.cr-section layout="overlay-right" .cr-mat-bottom}
+
+:::{focus-on="cr-scrub"}
+On 1 January 2026 the current regime entered force. Indexation is its defining feature: the band's maximal monthly depreciation at month T equals headline CPI inflation at month T−2. Permitted depreciation widened from 2.5% in January 2026 to 3.4% in May while <span class="k" data-key="crimson">headline inflation</span> fell from 2.9% to 2.1%. A band that widens during disinflation is the procyclical loosening indexation implies.
+:::
+
+:::{.progress-block}
+:::{focus-on="cr-scrub"}
+<span class="k" data-key="crimson">Headline inflation</span> has printed at or above 2% in every month since September 2025, nine consecutive prints. Real transactional balances remain below where they stood at the start of the program. The <span class="k" data-key="actual">core</span> print of 1.9% in May is the first below that line. Disinflation that stalls at a 2% floor while the nominal anchor moves with lagged prices is a different object from disinflation that converges.
+:::
+:::
+
+:::{#cr-scrub .cr-chart-full}
+```{ojs}
+//| echo: false
+{
+  const w = width;
+  const h = Math.round(w * 0.6);
+  // top: 88 gives the big number's Fraunces glyphs (up to 5rem/80px, ~60px
+  // ascent) room above the plot without clipping at the SVG's own edge.
+  const margin = { top: 88, right: w > 560 ? 100 : 52, bottom: 28, left: 40 };
+  const parseMonth = d3.utcParse("%Y-%m");
+  const dates = regimes.labels.map(parseMonth);
+  const x = d3.scaleUtc().domain(d3.extent(dates)).range([margin.left, w - margin.right]);
+  const yMax = d3.max([...regimes.headline, ...regimes.core].filter((v) => v != null));
+  const y = d3.scaleLinear().domain([0, yMax]).nice().range([h - margin.bottom, margin.top]);
+
+  const svg = d3.create("svg").attr("width", w).attr("height", h).attr("viewBox", [0, 0, w, h]);
+  // R1 item 4: <title>/<desc>.
+  svg.insert("desc", ":first-child").text("Headline and core monthly inflation, December 2023 through May 2026, revealed as you scrub.");
+  svg.insert("title", ":first-child").text("Headline and core inflation, scrubbable");
+  svg.attr("role", "img").attr("aria-label", "Headline and core inflation, scrubbable");
+  charts.axes(d3, svg, { x, y, h, margin, xTicks: w > 600 ? 6 : 4 });
+
+  const crimson = charts.cssVar("--k-crimson", "#a32d2d");
+  const ink = charts.cssVar("--ink", "#1c1917");
+  const tt = Math.max(0.12, Math.min(1, crProgressBlock));
+
+  const headlineVals = regimes.headline.filter((v) => v != null);
+  const headPx = dates.map((d, i) => [d, regimes.headline[i]]).filter((d) => d[1] != null).map((d) => [x(d[0]), y(d[1])]);
+  const drawnHead = charts.sliceTo(headPx, tt);
+  charts.areaUnder(d3, svg, drawnHead, h - margin.bottom, {
+    id: "cr-scrub-area", fill: charts.fadeGradient(svg, "cr-scrub-fade", crimson),
+  });
+  let hLine = svg.select("#cr-scrub-headline");
+  if (hLine.empty()) hLine = svg.append("path").attr("id", "cr-scrub-headline");
+  hLine.attr("d", d3.line()(drawnHead)).attr("fill", "none").attr("stroke", crimson).attr("stroke-width", 3);
+
+  const corePx = dates.map((d, i) => [d, regimes.core[i]]).filter((d) => d[1] != null).map((d) => [x(d[0]), y(d[1])]);
+  const drawnCore = charts.sliceTo(corePx, tt);
+  let cLine = svg.select("#cr-scrub-core");
+  if (cLine.empty()) cLine = svg.append("path").attr("id", "cr-scrub-core");
+  cLine.attr("d", d3.line()(drawnCore)).attr("fill", "none").attr("stroke", ink).attr("stroke-width", 1.75).attr("opacity", 0.8);
+  charts.endLabel(svg, { x: drawnCore[drawnCore.length - 1][0], y: drawnCore[drawnCore.length - 1][1], text: "Core", color: ink });
+
+  const idx = Math.max(1, Math.round(headlineVals.length * tt)) - 1;
+  charts.bigNumber(svg, { id: "cr-scrub-number", x: w - margin.right, y: 68, value: headlineVals[idx], t: 1, decimals: 1, suffix: "%", anchor: "end" });
+
+  return svg.node();
+}
+```
+:::
+
+:::
+:::
+
+<!-- CLOSING PROSE — steps.md "The verdict" and "Method", verbatim, kind:
+     prose (README.md mapping: plain Markdown section, no .cr-section). -->
+
+## The verdict
+
+The record reads in four states. Delivered: the disinflation from 25.5% to 2.1% per month, the parallel premium from triple digits to near parity, a fiscal surplus held every month since January 2024, and the legibility of the monetary aggregate restored. Reversed: dollarization and the closure of the central bank, replaced by an actively managed peso regime. Partial: the cepo, lifted for individuals in April 2025 and still binding on corporates. Held by discretion: the surplus, whose deficit rule remains a pending IMF benchmark, and the reserve position, negative on net and financed by borrowed buffers.
+
+Falsifiable by design, this reading may already be meeting its falsifier. A corridor that held through a genuine political shock, with the budget loosening and the disinflation surviving, would weaken the claim that the anchor is borrowed. Core inflation breaking decisively below 2% under the band would weaken the inertia mechanism, and the May core print of 1.9% is the first below that line. Pre-registered for the December 2026 print, the persistence-break test is the scheduled adjudication of both. Until those prints exist, the verdict stands as the evidence leaves it. Disinflation is real, and the institution that would make it last is still the one promise the program has not kept.
+
+## Method
+
+Data are frozen at the May 2026 consumer-price print, and every figure here is computed on that vintage. That freeze is itself a fact about the regime, since the band indexes to a CPI whose methodology is under political dispute, still carrying expenditure weights from the 2004–05 household survey, its scheduled rebasing shelved after the resignation of INDEC's director in February 2026. A regime indexed to that number has to be read against a stated vintage of it.
+
+Base money, reserves, and the official and parallel exchange rates come from the BCRA; consumer prices from INDEC; the reserve path, the maturity schedule, and Fund credit from IMF Country Report 2026/105, documentary rather than pipeline-estimated and flagged as such at the source line of each figure.
+
+Full empirical treatment, methodology, and references sit in [the working paper](/assets/papers/dae618c21735d5da1bbfb0620c40a59c.pdf). The condensed prose version is [the post](/post/argentinas-monetary-report-card-promise-versus-delivery-under-milei), and the code behind every series and figure is public at [github.com/nik110403/argentina-monetary-deepdive](https://github.com/nik110403/argentina-monetary-deepdive).

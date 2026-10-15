@@ -1,0 +1,13 @@
+<!-- brand/header.html — {{< include >}}'d right after the front matter in
+     story.qmd. Three jobs: (0, critic fold-in item 9) a skip link, (1) the
+     Space Grotesk meta line "PDF · Repo · Vintage: <vintage>" as linked
+     words rather than raw URLs (critic fold-in P1 #9/P2: the un-linked
+     path/hash overflowed at 390 and read as machine output, uppercased),
+     (2) the one-accent switch (`accent: teal` front matter ->
+     <body class="accent-teal">, see brand.css). Still ~12 lines by design
+     — nothing else belongs here. -->
+<a class="skip-link" href="#quarto-document-content">Skip to content</a>
+<p class="story-meta"><a href="{{< meta pdf >}}">PDF</a> · <a href="{{< meta repo >}}">Repo</a> · Vintage: {{< meta vintage >}}</p>
+<script>
+document.body.classList.add(`accent-{{< meta accent >}}`);
+</script>

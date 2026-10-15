@@ -1,0 +1,1233 @@
+/* brand/brand.css — DESIGN.md tokens (repo root) as custom properties, plus
+   the closeread-html extension's own --cr-* variables retargeted to them.
+   Light on :root; dark only under prefers-color-scheme (no toggle, Q5).
+   Register: raihankalla.id/media-effects-election — one reading column,
+   numbered kickers, big numeric callouts. Warm paper, ink, ONE accent,
+   hairline rules, no shadows, no cards. Font ban-list flag (design-builder
+   precedence rule / DESIGN.md "Font ban-list flag"): Fraunces, Atkinson
+   Hyperlegible and Space Grotesk are brand continuity from the site's
+   already-shipped editorial system, not a greenfield pick — keep as-is. */
+
+:root {
+  /* -- DESIGN.md tokens, light -- */
+  --paper: #faf7f2;
+  --paper-deep: #f3eee5;
+  --ink: #1c1917;
+  --ink-soft: #57534e;
+  --oxblood: #8c2f1b;
+  --teal: #2f7184;
+
+  /* fixed dark-stage tokens (E5): a section can opt into these regardless
+     of prefers-color-scheme, for a full-bleed "chart IS the page" opener —
+     values match the existing prefers-color-scheme dark block below so a
+     dark-stage section and a system dark mode never clash. */
+  --paper-dark: #0f0d0a;
+  --ink-dark: #f1ece2;
+  /* E5 fix round 2, item 2: matches the --ink-soft value the
+     prefers-color-scheme:dark block below already uses, added here so the
+     forced-dark hook stage can reach it under a LIGHT system preference
+     too (see the .cr-section.cr-hook override below). Not a new colour —
+     same value, just readable from a light-mode :root context. */
+  --ink-soft-dark: #b9b0a3;
+
+  --k-crimson: #a32d2d;
+  --k-blue: #185fa5;
+  --k-green: #1d9e75;
+  --k-amber: #ba7517;
+  --k-red: #d85a30;
+  --k-purple: #534ab7;
+  --k-gray: #8a8a86;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  /* R1 fix round 1 (F1/F2/F3): single source of truth for the pinned
+     kicker's rendered height, so the mobile chart-band's `top` offset
+     (F3) can stack directly below it without a runtime measurement. */
+  --cr-kicker-h: 2.6rem;
+
+  --hairline: color-mix(in oklab, var(--ink) 16%, transparent);
+
+  /* ONE accent per story; default oxblood, `accent: teal` front matter ->
+     <body class="accent-teal"> (brand/header.html) switches it. */
+  --accent: var(--oxblood);
+
+  /* -- retarget closeread's own vars (closeread.scss :root block) -- */
+  /* R1 fix round 2 (G2): 88%+6%=94%, and CSS color-mix() scales the
+     RESULT'S ALPHA by the sum of the two percentages when that sum is
+     under 100% -- measured computed background `oklab(... / 0.94)`, a raw
+     alpha channel over content DESIGN.md forbids by name, even though
+     neither input colour itself carries one. 94%+6%=100% keeps the exact
+     same 6% ink tint (the only thing that mattered visually) while
+     landing the mix's own alpha back at 1. */
+  --cr-narrative-background-color-overlay: color-mix(in oklab, var(--paper) 94%, var(--ink) 6%);
+  --cr-narrative-text-color-overlay: var(--ink);
+  --cr-narrative-background-color-sidebar: transparent;
+  --cr-narrative-text-color-sidebar: var(--ink);
+  --cr-narrative-border-radius: 0; /* no card, per the register */
+  --cr-narrative-overlay-max-width: 34rem;
+  --cr-narrative-font-family: "Atkinson Hyperlegible", Helvetica Neue, sans-serif;
+  --cr-narrative-font-size: 1.0625rem;
+  --cr-narrative-sidebar-width: minmax(18rem, 34rem);
+  --cr-section-background-color: var(--paper);
+}
+
+body.accent-teal {
+  --accent: var(--teal);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0f0d0a;
+    --paper-deep: #181410;
+    --ink: #f1ece2;
+    --ink-soft: #b9b0a3;
+    --oxblood: #e2855f;
+    --teal: #6fc6db;
+  }
+}
+
+/* -- page -- */
+
+html, body {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: "Atkinson Hyperlegible", Helvetica Neue, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+h1, h2, .subtitle {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.quarto-title .title {
+  font-size: clamp(2.1rem, 4.6vw, 3.4rem);
+  line-height: 1.08;
+}
+
+.subtitle {
+  font-weight: 400;
+  letter-spacing: normal;
+  font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+a {
+  color: var(--accent);
+}
+
+/* -- header include: meta line + standfirst area -- */
+
+.story-meta {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  /* R1 item 3: was `text-transform: uppercase` at ~185ch (detector
+     all-caps-body + line-length) -- sentence case (the source text "PDF ·
+     Repo · Vintage: ..." is already properly cased) and a real prose
+     measure instead of running the full content width. */
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--hairline);
+  padding-top: 0.6rem;
+  margin-top: 0.6rem;
+  max-width: 70ch;
+}
+
+/* -- numbered section kickers, "01 · Three regimes" (raihankalla.id) --
+   pure CSS counter, prose text is never touched. */
+
+body { counter-reset: cr-section; }
+.cr-section h2::before {
+  content: counter(cr-section, decimal-leading-zero) " · ";
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  vertical-align: 0.05em;
+}
+
+/* R1 item 0 (Nik 2026-09-08: "headings like 'Scrub the headline print' do
+   not stay on the page ... it feels off"). `.cr-kicker` is the small
+   pinned element the brief calls for: a markdown-level div, `position:
+   sticky`. It owns the counter now (moved off `.cr-section` itself,
+   which would otherwise double-count once both a kicker AND its
+   cr-section exist per scene). The large h2 is untouched and stays in
+   normal flow, scrolling off as before -- only the small kicker line
+   stays. The hook has no heading and gets no kicker (unchanged, own
+   note in the spec item).
+
+   R1 FIX ROUND 1 (design-critic 2026-09-08T19-53-45Z, item 0/0b -- both
+   real defects, not proxy-measurement errors this time). Also corrects a
+   containing-block claim this comment used to make (see the E5/R1-report
+   history in git blame): with the kicker now BEFORE the `##` heading
+   (item b below), it is a TOP-LEVEL sibling of `section.level2`, not
+   nested inside it -- Pandoc's `section-divs` wraps a new
+   `<section class="level2">` starting exactly AT each heading, so
+   anything before the heading falls outside it. Each scene's kicker
+   therefore shares ONE containing block with every other scene's kicker
+   (the document's main content column, not a per-scene box). This is
+   the ordinary "stacked sticky header" pattern -- each `.cr-kicker`
+   sticks at `top: 0` once its own normal-flow position scrolls above the
+   viewport, and stays stuck (its containing block is huge, so it never
+   hits a release bound) until the NEXT kicker's normal position also
+   reaches the top and, being later in DOM order at equal z-index, paints
+   over it. The reader only ever sees one at a time, and each releases
+   right as the next scene's kicker arrives -- functionally identical to
+   the old per-section-scoped design, verified below with
+   `elementFromPoint` at 3 positions inside each scene, not inferred from
+   the CSS alone.
+
+   (a) z-index 5 painted UNDER Closeread's own `.cr-section` -- the Lua
+   filter gives every section a `cr-column-screen` class by default
+   (closeread.lua:124) which carries `z-index: 998` (closeread.scss:23-25)
+   and applies to a grid item even at its default `position: static`. The
+   R1 verify script only checked `getBoundingClientRect()` (proves the box
+   PINS) not paint order (proves it's ON TOP) -- `elementFromPoint` at the
+   kicker's own centre returned the trigger div underneath it for ~90% of
+   each scene's scroll. 999 clears Closeread's 998; re-verified below with
+   `elementFromPoint`, never a bounding-rect proxy again.
+   (b) the kicker markup (story.qmd) now sits BEFORE the `##` heading --
+   kicker -> headline, the print convention this component is named after
+   -- where R1 had it AFTER, repeating the h2's own words. Its text is now
+   a short CATEGORY (1-3 words: "Regimes", "Confidence", "The scrub"),
+   never the headline. `display: flex; align-items: baseline` puts the
+   `::before` counter and the child `<p>` on ONE row: R1's block box had
+   an inline `::before` immediately followed by a block `<p>`, and an
+   inline box followed by a block always wraps onto its own line (the
+   "01 ·" orphan the critique's `heading-rhythm` finding named). Turning
+   the PARENT flex makes both the pseudo-element and the `<p>` flex items
+   in one row instead -- no extra wrapper needed. */
+.cr-kicker {
+  counter-increment: cr-section;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  /* R1 fix round 2 (G8, critic P2): the kicker's own hairline stopped at
+     x~1045 (main-content column width) while the scene's chart card ran
+     to x~1330 (full-bleed, same `screen-start/screen-end` line names
+     `.cr-section.cr-column-screen` uses) -- the one piece of chrome
+     labelling the scene was aligned to nothing IN it. Same line names,
+     applied directly here (CSS only, no markup change): the kicker is a
+     sibling of `.cr-scene`'s own `.cr-section`, in the same nested grid
+     context the earlier F1/F2 fix round already confirmed propagates
+     `page-columns`/`page-full` generically to every ancestor up to
+     `main`, not hard-coded to `section.level2`. */
+  grid-column: screen-start / screen-end;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  min-height: var(--cr-kicker-h);
+  box-sizing: border-box;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid var(--hairline);
+}
+.cr-kicker::before {
+  content: counter(cr-section, decimal-leading-zero) " ·";
+  color: var(--accent);
+  flex: none;
+}
+.cr-kicker p {
+  /* Pandoc wraps bare div text in a <p>; reset its default block margin
+     now that `.cr-kicker` is flex and the <p> is a flex item sharing the
+     row with the counter -- an un-reset margin would push it off-baseline. */
+  margin: 0;
+}
+
+/* -- trigger paragraphs -- */
+
+.cr-section .narrative-col .trigger {
+  border-top: 1px solid var(--hairline);
+}
+.cr-section .narrative-col .trigger .narrative {
+  max-width: 34rem;
+  color: var(--ink);
+  /* critic fold-in (P0 #1): this was `background: none`, cancelling the
+     opaque overlay mat brand.css:45 retargets and DESIGN.md's Don'ts
+     require — trigger prose sat directly on chart marks at 390/768. Same
+     mat as the overlay layout, painted here too so a sidebar trigger box
+     never sits bare against a chart. */
+  background: var(--cr-narrative-background-color-overlay);
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* inactive/active dim, pure CSS scroll-driven animation — no per-story JS.
+   Falls back to fully-readable ink where unsupported. */
+@supports (animation-timeline: view()) {
+  .cr-section .narrative-col .trigger .narrative {
+    animation: cr-trigger-focus linear both;
+    animation-timeline: view();
+    animation-range: cover 25% cover 60%;
+  }
+  @keyframes cr-trigger-focus {
+    0%, 100% { color: var(--ink-soft); }
+    45%, 100% { color: var(--ink); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cr-section .narrative-col .trigger .narrative {
+    animation: none;
+    color: var(--ink);
+  }
+}
+
+/* R1 fix round 2 (G6, critic P2): `prefers-reduced-motion: reduce` above
+   only ever addressed the `@supports (animation-timeline: view())` KEYFRAME
+   animation on `.narrative` -- closeread's own `.sticky` TRANSITION
+   (`opacity .5s, color .7s, transform 1s ease-in-out, transform-origin 1s
+   ease-in-out`, closeread.scss) survived under emulated reduce regardless,
+   so the authored `scale-by`/`pan-to` focus zooms kept animating for a
+   reader who explicitly asked them not to. charts.js's own `reduced()` /
+   `clampT()` already gate every DATA reveal (line draws, count-ups) --
+   this is the CSS-transition half `!important` since a plain re-declaration
+   would still lose to whichever of closeread's own shorthand `transition`
+   rules happens to load later in source order. */
+@media (prefers-reduced-motion: reduce) {
+  .sticky,
+  .narrative {
+    transition-duration: 0.01s !important;
+    animation-duration: 0.01s !important;
+  }
+}
+
+/* overlay mode's mat: opaque paper, never alpha (retargeted vars above cover
+   this at every width, not just <860px, since closeread forces overlay-center
+   under 860px regardless of authored layout). */
+
+/* -- sticky figures -- */
+
+.sticky-col-stack .sticky {
+  background: var(--paper-deep);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  width: min(90%, 640px);
+}
+.sticky-col-stack .sticky img,
+.sticky-col-stack .sticky svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+/* chart chrome inside OJS-drawn SVGs: axis text / legends in Space Grotesk,
+   the scrub big number in Fraunces (lib/scrub.js sets these classes).
+   0.8rem (E5 fix round 1, raised from 0.72rem): the viewBox-vs-rendered-
+   width bug (story.qmd stickyWidth cell fixes it) made 1 user unit shrink
+   to ~0.4-0.8 CSS px on the sidebar charts, so 0.72rem/11.5px was
+   rendering at ~5px — "almost impossible to read" (Nik). With the scale
+   fix, 0.72rem would render legibly again, but 0.8rem/12.8px is the
+   explicit floor the brief sets so axis ticks clear 12px on every
+   viewport with margin, not exactly at it. Covers axis ticks and every
+   selector below that doesn't set its own size. */
+.sticky svg text {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.8rem;
+  fill: var(--ink-soft);
+}
+.sticky svg text.cr-big-number {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  fill: var(--accent);
+  /* critic fold-in (P0 #2): `.sticky svg text` above sets 0.72rem and, same
+     specificity + later rule, was winning over the size the SVG's own
+     presentation attribute asked for — every big number rendered ~11.5px,
+     smaller than its own axis ticks. Explicit size here restores the
+     Politico device (charts.js `bigNumber()` still sets a per-scene size
+     attr for the hook's larger head number; this is the floor every other
+     caller gets for free). */
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  /* R1 fix round 1 (P3): the scrub/hook number rewrites every frame via
+     charts.js `countUp` -- without tabular figures Fraunces' proportional
+     digit widths shimmer/reflow as the value changes. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- .k[data-key] swatch: seven k-* keys, 0.55em square before the label -- */
+
+.k[data-key] {
+  color: var(--ink);
+}
+.k[data-key]::before {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-inline-end: 0.35em;
+  vertical-align: -0.05em;
+  background: var(--k-color, var(--ink-soft));
+  border-radius: 1px;
+}
+.k[data-key="crimson"] { --k-color: var(--k-crimson); }
+.k[data-key="blue"]    { --k-color: var(--k-blue); }
+.k[data-key="green"]   { --k-color: var(--k-green); }
+.k[data-key="amber"]   { --k-color: var(--k-amber); }
+.k[data-key="red"]     { --k-color: var(--k-red); }
+.k[data-key="purple"]  { --k-color: var(--k-purple); }
+.k[data-key="gray"]    { --k-color: var(--k-gray); }
+
+/* -- widget / grid scene chrome -- */
+
+.cr-widget label,
+.cr-widget select {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.cr-grid figure figcaption {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+
+/* mobile (<860px): closeread already forces overlay-center; nothing extra
+   needed here since the overlay mat vars above are opaque at every width. */
+
+/* -- E5: live-chart chrome shared by every OJS scene, and the dark-stage
+   opener. Moved here from story.qmd's story-local <style> (E4) per SPEC.md
+   E5 "story.qmd's inline styles move into brand.css" -- generalised from
+   the E4 override's #cr-hook-chart id to the .cr-chart-full class so every
+   full-bleed OJS sticky (the hook's 4 stages, the scrub scene) can opt in,
+   not just one id. -- */
+
+/* Politico taste target: "the chart IS the page" -- brand.css's
+   `.sticky-col-stack .sticky` rule (paper-deep card, padding, width capped)
+   is right for a normal sidebar chart but wrong for a full-bleed OJS chart;
+   `.sticky.cr-chart-full` (class, not id) outranks that plain two-class
+   descendant selector. */
+.sticky.cr-chart-full {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
+  max-width: none;
+}
+.sticky.cr-chart-full svg {
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+}
+
+/* end labels (direct, replacing a legend), event hairlines and phase-mean
+   callouts: Space Grotesk like every other chart label; color comes from
+   each element's own `fill`/`stroke` attr (charts.js), set per k-* series. */
+.sticky svg text.cr-end-label,
+.sticky svg .cr-hairline text,
+.sticky svg .cr-mean text,
+.sticky svg .cr-band text {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.8rem; /* E5 fix round 1: matches `.sticky svg text` above */
+  font-weight: 500;
+}
+.sticky svg .cr-band text {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* R1 fix round 2 (G9, critic P3): confidence's "Dec 2023 = 100" gridline
+   note sits 134px above its own gridline on a 197px-tall plot at 390 --
+   9% of the chart restating what the adjacent paragraph already states
+   verbatim ("Indexed to 100 at December 2023"). Accepted at >=640px
+   (critic's own read: a conventional index-base note in the chart's title
+   position, same place the FT/Economist put one) -- suppressed below it.
+   Gated on the real VIEWPORT width via a media query, not the chart's own
+   pixel width the drawer receives: G1's tablet restructure makes chart
+   width and viewport width diverge (a stacked-mode card can render at
+   ~544-608px content width at a 640-1023px viewport), so a JS-side `w`
+   threshold would fire at the wrong boundary. story.qmd tags the element
+   `.cr-index-note` alongside its existing `.cr-end-label`. */
+.cr-index-note {
+  display: inline;
+}
+@media (max-width: 639.98px) {
+  .cr-index-note {
+    display: none;
+  }
+}
+
+/* R1 fix round 1 (F5): "2.1%" (confidence-gap) and "78.7" (confidence-
+   balances) sit ON the data line they annotate -- 8-17 path-sample hits
+   inside the glyph box at every viewport. A paint-order halo alone would
+   only mask the VISUAL overlap, not the underlying geometry the verify
+   script samples (`getPointAtLength` against the callout's real bbox) --
+   per the brief this halo is paired with an actual x-dodge
+   (`charts.dodgeFromPath`, story.qmd) that moves the label off the path,
+   not just over it. Kept anyway as a second line of defence for any
+   sub-pixel graze the dodge doesn't fully clear, and because a label
+   sitting directly on ANY line (even one it doesn't touch pixel-for-
+   pixel) reads better with a paper-coloured mat behind the glyphs. */
+.sticky svg text.cr-end-label,
+.sticky svg .cr-mean text {
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+/* dark-stage equivalent (brief: "dark-stage equivalent where relevant") --
+   not currently reachable (the hook draws no end-label/mean-segment text,
+   only `charts.bigNumber`), kept so a future dark-stage scene that DOES
+   add one of these classes halos correctly instead of matting light
+   paper onto a near-black background. `--paper` itself is never
+   re-pointed inside `.cr-section.cr-hook` (only --ink/--ink-soft/--accent
+   are, see below), so this override is required, not redundant. */
+.cr-section.cr-hook .sticky svg text.cr-end-label,
+.cr-section.cr-hook .sticky svg .cr-mean text {
+  stroke: var(--paper-dark);
+}
+
+/* dark-stage hook: a section-level override to --paper-dark/--ink-dark
+   regardless of prefers-color-scheme, no section kicker (counter-increment
+   none, E4), no card -- the chart is the page. */
+.cr-section.cr-hook {
+  counter-increment: none;
+  background-color: var(--paper-dark);
+  color: var(--ink-dark);
+  /* E5 fix round 2, item 2: axe-core serious color-contrast on
+     `.narrative-col .trigger .narrative` inside the hook (measured 3x at
+     1440 / 4x at 390). Root cause — the scroll-driven `cr-trigger-focus`
+     keyframes below (`@supports (animation-timeline: view())`) animate
+     `color` between `--ink-soft` and `--ink`, and a running CSS animation
+     always wins the cascade over the plain `color: var(--ink-dark)`
+     declaration on `.trigger .narrative` for the whole 25%-60% scroll
+     range it covers — so under a LIGHT system preference (--ink-soft
+     #57534e / --ink #1c1917, both dark colours) the narrative text was
+     rendering dark-on-near-black for nearly its entire scroll range,
+     regardless of the static rule. Re-pointing --ink/--ink-soft locally
+     to the dark-mode values (scoped to this section only — cssVar() reads
+     document.documentElement for chart colours, so this never touches the
+     OJS-drawn SVGs) fixes every text node the animation drives without
+     touching --ink-dark/--paper-dark themselves. */
+  --ink: var(--ink-dark);
+  --ink-soft: var(--ink-soft-dark);
+}
+.cr-section.cr-hook .quarto-title,
+.cr-section.cr-hook h1,
+.cr-section.cr-hook h2 {
+  color: var(--ink-dark);
+}
+/* the trigger mat on the dark stage: opaque dark, never alpha (same rule
+   as the light-mode overlay mat, just re-based off the dark tokens). */
+.cr-section.cr-hook .trigger .narrative {
+  /* R1 fix round 2 (G2): same color-mix alpha-scaling bug as the light
+     overlay mat above (88%+10%=98% -> computed alpha 0.98) -- 90%+10%=100%
+     keeps the same 10% ink-dark tint, alpha back to 1. */
+  background: color-mix(in oklab, var(--paper-dark) 90%, var(--ink-dark) 10%);
+  color: var(--ink-dark);
+}
+.cr-section.cr-hook .trigger .narrative .k[data-key] {
+  color: var(--ink-dark);
+}
+/* critic fold-in (item 6): --accent still resolved to the light-mode
+   oxblood (#8c2f1b) inside the forced-dark stage under a light system
+   preference -- near-invisible dark-on-near-black. Re-point --accent (and
+   --oxblood/--teal, since `accent: teal` can still select teal here) to
+   the same values the site already uses for dark mode, so the hook number
+   and any dark-stage link read at full contrast regardless of system
+   theme. */
+.cr-section.cr-hook {
+  --oxblood: #e2855f;
+  --teal: #6fc6db;
+  --accent: var(--oxblood);
+}
+.cr-section.cr-hook.accent-teal,
+body.accent-teal .cr-section.cr-hook {
+  --accent: var(--teal);
+}
+
+/* critic fold-in (P1 #6/#7): title-block + meta tightened so the hook's
+   first pixel is partly on screen at scroll 0 instead of ~330px (1440) /
+   ~600px (390) of empty paper below the fold. */
+#title-block-header.quarto-title-block {
+  margin-bottom: 0.75rem;
+}
+.quarto-title-meta {
+  margin-top: 0.5rem !important;
+  gap: 0.5rem 1.5rem;
+}
+/* critic fold-in (P1 #9): Quarto's own opacity stack on Author/Published
+   left them at ~1.3:1 contrast; brand.css never reached them before.
+   R1 FIX ROUND 1 (F8, critic P2, stale-fix regression): this selector's
+   specificity (0,1,0) never beat Quarto's own bundled bootstrap rule
+   `#title-block-header.quarto-title-block.default .quarto-title-meta-heading`
+   (1,3,0 -- id + 3 classes), which sets `opacity: .8` -- so the `opacity: 1`
+   below never applied and Author/Published stayed at ~4.0:1. Matched to
+   Quarto's exact selector (equal specificity) rather than reaching for
+   `!important`; brand.css loads after Quarto's bundled bootstrap.css, so
+   equal specificity + later source order is enough to win outright. */
+#title-block-header.quarto-title-block.default .quarto-title-meta-heading {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  opacity: 1;
+}
+.quarto-title-meta-contents {
+  color: var(--ink-soft);
+  opacity: 1;
+  font-size: 0.9rem;
+}
+.story-meta {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+}
+/* R1 fix round 1 (F7): PDF/Repo/inline links measured 22x16-31x16 at 390,
+   under the 44px mobile hit-area minimum. `display: inline-block` lets an
+   inline link carry block padding without the block-after-inline wrap
+   `.cr-kicker` hit above; the matching negative margin cancels the
+   padding's effect on surrounding line box height, so the visible text
+   position and the paragraph's line-height are identical to before --
+   only the invisible hit box grows. Not scoped to mobile: the trick is
+   layout-neutral at every width, and a larger desktop hit target costs
+   nothing. */
+.story-meta a {
+  display: inline-block;
+  padding-block: 0.85rem;
+  margin-block: -0.85rem;
+  /* R1 fix round 2 (G5, critic P2): F7 grew the hit area on the block axis
+     only -- full rects measured PDF 23x49, Repo 31x49, both still under
+     44x44 (and PDF under the 24x24 WCAG 2.5.8 floor) on the inline axis.
+     Same negative-margin trick, inline this time: 0.7rem clears 44px on
+     "PDF" (the narrower of the two) with margin, cancels on the visual
+     line the same way the block-axis padding already does. */
+  padding-inline: 0.7rem;
+  margin-inline: -0.7rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+/* critic fold-in (P1 #8): the shipped Table of Contents is Bootstrap-default
+   blue and only ever lists the two plain-prose sections (Quarto's TOC walker
+   does not see headings the closeread Lua filter has relocated inside
+   `.cr-section`'s narrative-col), so a reader sees "The verdict" marked
+   active at scroll 0 while 3 of 5 sections are simply missing -- worse than
+   no contents list (critic's own alternative). Dropped via story.qmd
+   front matter (`toc: false`); this rule is the fallback in case a future
+   story re-enables it without re-solving the coverage problem. */
+#TOC {
+  display: none;
+}
+
+/* critic fold-in (item 9): skip link + a branded focus ring, neither
+   present before. */
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 1000;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0.6rem 1rem;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.85rem;
+}
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+}
+a:focus-visible,
+.skip-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* critic fold-in (P2): the plain-prose sections ("The verdict", "Method")
+   had no width cap and ran ~99ch against the scenes' 64ch (34rem) measure
+   -- one page, two measures. */
+main.content section.level2 > h2,
+main.content section.level2 > p {
+  max-width: 34rem;
+}
+
+/* R1 fix round 1 (F2): detector `heading-rhythm` x3, "0px above vs 94px
+   below" -- the old order (h2 then kicker immediately under it, zero gap)
+   gave every scene heading no top air and a big bottom gap from the
+   cr-section's own first-trigger padding. Now that the kicker precedes
+   the h2 (see `.cr-kicker` above), give the h2 real rhythm itself: more
+   air above (it follows the small pinned kicker bar) than below (the
+   cr-section's first `.trigger` already carries `padding-block: 45svh`
+   of its own). Scoped to every direct h2 child of a level2 section, not
+   just the numbered scenes, so "The verdict"/"Method" -- headings with no
+   kicker at all -- get the same sane rhythm rather than a second rule. */
+section.level2 > h2 {
+  margin: 2.5rem 0 1rem;
+}
+
+/* R1 item 1 (critic P1, 2026-09-08 19:00Z): at <=640px the sidebar-left/
+   -right narrative card covered 47-100% of the sticky chart on every
+   scene (5/8 cells at 100%). Root cause -- Closeread's OWN mobile
+   breakpoint (575.98px, closeread.scss) turns every layout, sidebar
+   included, into a single grid cell (both columns collapse to
+   grid-column: 1, but grid-template-rows stays the base rule's `1fr`, so
+   narrative-col and sticky-col occupy the SAME cell and overlap by
+   design -- correct for `overlay-*` layouts, wrong for `sidebar-*`,
+   which never wanted an overlay). This query starts at 640px (wider than
+   closeread's own 575.98px, per the brief) and wins by cascade order
+   (brand.css loads after closeread.css, equal selector specificity).
+
+   R1 FIX ROUND 1 (design-critic 2026-09-08T19-53-45Z, item 1 --
+   fixed-with-new-defect): un-stickying entirely (R1's fix) killed the
+   scroll-tied chart swap -- only trigger 1's chart was ever visible, 2000px
+   above the prose that cited it, ~470px of dead paper between triggers.
+   Replaced with a genuinely PINNED band instead of a flattened stack:
+   `.narrative-col` and `.sticky-col` stay in the SAME grid row (both
+   already `grid-row: 1` in Closeread's own base rule -- unchanged here),
+   only `grid-template-columns` collapses to one column so they share it.
+   Because they share one (tall) row -- sized to `.narrative-col`'s full
+   content height, the same mechanic that lets the desktop sidebar chart
+   pin beside a much taller prose column -- `.sticky-col-stack`'s own
+   `position: sticky` (Closeread's base rule, untouched) has room to
+   travel and pins across the WHOLE scene's scroll instead of exactly one
+   screenful. Its height drops from 100dvh to ~42dvh (a band, not a full
+   screen) and its `top` starts right below the pinned kicker
+   (`var(--cr-kicker-h)`, F1/F2) so the two pinned elements stack instead
+   of overlapping. `.narrative-col` gets a matching `padding-top: 42dvh`
+   so its actual first trigger box starts visually BELOW the band, never
+   under it -- the two never occupy the same on-screen pixels at rest,
+   only transiently as a trigger scrolls past the band's screen region on
+   its way off-top, same as any sticky-header-over-scrolling-content
+   pattern. Trigger `padding-block` (Closeread's own 45svh) collapses to
+   15svh here so the total per-trigger dead band stays well under one
+   viewport (brief: "no dead band exceeds ~1 viewport") while still
+   giving scrollama's 0.5-offset trigger observer enough travel to tell
+   the four stages apart. Band wins any incidental overlap
+   (`.sticky-col` z-index above `.narrative-col`) since losing chart
+   visibility mid-scroll is worse than a paragraph about to scroll off
+   anyway. `overlay-*` layouts are untouched -- their narrative-over-chart
+   look is the intended design there, not this defect. */
+/* R1 FIX ROUND 2 (G1, critic P0, design-critic 2026-09-09T00-32-34Z): the
+   next rule down (item 2's tablet fix) pinned the narrative track at a
+   fixed 30rem/510px whenever it applied (641-1279.98px), so the chart
+   column -- whatever was left of `viewport - 510` -- collapsed to 116px
+   @641, 172px @700, 237x157px @768 (iPad portrait, 9 text collisions, a
+   fused axis row) before finally clearing 480px at >=1024. No grid-track
+   arithmetic defends a floor for BOTH siblings when one is fixed-width and
+   the other is `2fr` with no minimum of its own; the fixed sibling always
+   wins whatever it's given, per the brief's own root-cause note. Per the
+   brief's second option ("gate the sidebar layout to >=1024 and stack ...
+   below it"): raise THIS breakpoint's ceiling from 640px to 1023.98px so
+   every width this fix used to squeeze reuses the stacked-band pattern
+   already proven at 390 instead -- same declarations below, unchanged,
+   just applied over a wider range. The chart card then always gets
+   `min(90%, 640px)` of the FULL viewport width (never `viewport - 510`),
+   comfortably >=480px everywhere in this band; `.narrative`'s own 34rem
+   cap (brand.css above) was already the visible prose measure in the
+   390-640 range this rule covered before, unaffected by the range change,
+   and clears 32ch/40ch at every width tested (see verify). Item 2's own
+   media query (below) now starts at 1024px instead of 641px -- true
+   two-column sidebar layout is reserved for the range this fix always
+   measured clean in, and the 1280-1439.98px seam (a separate, older,
+   untouched rule) is unaffected either way. */
+@media (max-width: 1023.98px) {
+  .cr-section.sidebar-left,
+  .cr-section.sidebar-right {
+    grid-template-columns: 1fr;
+  }
+  .cr-section.sidebar-left .sticky-col,
+  .cr-section.sidebar-right .sticky-col {
+    grid-column: 1;
+    z-index: 2;
+  }
+  .cr-section.sidebar-left .narrative-col,
+  .cr-section.sidebar-right .narrative-col {
+    grid-column: 1;
+    z-index: 1;
+    margin-inline: auto;
+    padding-top: 60dvh;
+  }
+  .cr-section.sidebar-left .sticky-col .sticky-col-stack,
+  .cr-section.sidebar-right .sticky-col .sticky-col-stack {
+    /* R1c (exhibit panel, SPEC.md closeread-engine, P4): raised 42dvh ->
+       48dvh (the brief's own ceiling) -- the band now carries the same
+       title/chart/caption/source anatomy the >=1024 panel does (P5: one
+       markup, ground+height differ by breakpoint only), and the extra 6dvh
+       gives that chrome room without starving the chart itself. Matching
+       `padding-top` above keeps the narrative's own first trigger clear of
+       the taller band.
+       R1c fix2 (H3, critic P1): raised again, 48dvh -> 60dvh -- at 390 the
+       48dvh band (405px) still gave the chart only 179px (44%) once the
+       title/caption/source chrome (226px) was accounted for; measured
+       chrome didn't shrink enough on its own (even after H2/H5's shorter
+       captions, the source-fold rule below, and this rule's first pass at
+       56dvh -- measured 57.7%/58.3%, still short of the 60% floor) to hit
+       the brief's 60% floor without more band to work with. */
+    height: 60dvh;
+    top: var(--cr-kicker-h);
+    /* R1 fix round 1 (F3): the band needs an OPAQUE ground independent of
+       the card inside it, or scrolling prose ghosts through the gap around
+       a shorter card (see git history for the original measurement). R1c:
+       `.sticky` now fills 100% of this band (no more centred card with
+       margin gaps -- see the R1c `.sticky` override below), and `--paper`
+       (flat page colour) is swapped for `--paper-deep` so the band reads
+       as the SAME exhibit ground the >=1024 panel uses (P1), not a
+       visually distinct "band vs panel" -- one continuous system across
+       every width. */
+    background: var(--paper-deep);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .cr-section.sidebar-left .narrative-col .trigger,
+  .cr-section.sidebar-right .narrative-col .trigger {
+    padding-block: 15svh;
+  }
+}
+
+/* R1 item 2 (critic-adjacent, Nik 2026-09-08): at ~1024px the sidebar
+   card (`.sticky-col-stack .sticky`) renders narrow -- `--cr-narrative-
+   sidebar-width: minmax(18rem, 34rem)` settles near its own 34rem/544px
+   ceiling regardless of viewport, so the `2fr` chart column is squeezed
+   into whatever the ~1024px screen-width cr-section has left over
+   (critic's own floor for this fix: every sidebar svg >= 480px at 1024).
+   Narrowing the narrative track specifically in the tablet band (641px,
+   just above item 1's stack breakpoint, to 1279.98px, Bootstrap's lg/xl
+   seam) hands that width back to the chart; the chart itself needs no
+   change since item (a)'s `cardWidth(id)` measurement already reacts to
+   its own container and keeps scale 1.00 at any width it's given.
+
+   R1 FIX ROUND 1 (design-critic 2026-09-08T19-53-45Z, item 2 --
+   fixed-with-new-defect): `minmax(15rem, 19rem)` overcorrected -- the
+   track always resolves to its own ceiling (prose wants more width than
+   19rem gives it, same as it wanted more than 34rem before), so the
+   prose measure fell to 21ch/34ch across the page's four different
+   widths, well under the 45-75ch floor. First attempt: `minmax(24rem,
+   24rem)` (the brief's own floor, fixed so it can't float to a starving
+   ceiling) -- measured only 28.5ch at 1024 (this root's rem resolves to
+   17px here, so 24rem = 408px, not the 384 the brief's shorthand
+   suggests), because `.trigger`'s own `padding-inline: 24px` (Closeread's
+   base rule) plus `.narrative`'s `0.75em` side padding eat ~75px of
+   whatever the track gets before any text renders, and growing the track
+   further to compensate runs straight into the 480px chart floor: at
+   1024 total width 1024px, keeping the chart's SVG >= 480px caps
+   narrative-col at ~453px regardless of how much padding is trimmed
+   around it -- (453-~30px overhead)/~11.7px per ch tops out near 36ch,
+   short of 40.
+   "or take width from the outer margin" (the brief's own fallback):
+   `.sticky-col-stack .sticky`'s OWN `min(90%, 640px)` width cap + 1rem
+   padding was never layout-scoped -- it exists to keep a chart CARD off
+   the section's raw edge, a concern that doesn't apply to a `2fr` grid
+   track that's already narrower than the section. Tightening it (96%,
+   0.5rem) *inside this sidebar-only tablet breakpoint* buys the chart
+   column back ~48px of its own margin, which lets the narrative track
+   grow further (30rem) while the SVG still clears 480px -- verified
+   below, not computed by hand (a 90%/1rem-cap chain plus two padding
+   sources is easy to get wrong by a few px on paper). */
+/* R1 FIX ROUND 2 (G1): min-width raised 641px -> 1024px -- the previous
+   rule above now stacks (single column, pinned band) through 1023.98px, so
+   true two-column sidebar layout only exists >=1024px, exactly the range
+   this fix already measured clean (svg 483px, prose 40.7ch at 1024,
+   unaffected by the range change itself). */
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+  :root {
+    --cr-narrative-sidebar-width: minmax(24rem, 30rem);
+  }
+  .cr-section.sidebar-left .narrative-col .trigger,
+  .cr-section.sidebar-right .narrative-col .trigger {
+    padding-inline: 10px;
+  }
+  .cr-section.sidebar-left .narrative-col .narrative,
+  .cr-section.sidebar-right .narrative-col .narrative {
+    padding-inline: 0.4em;
+  }
+  /* R1c (exhibit panel): the `width: min(96%, 640px)` card-cap that used to
+     live here is gone -- `.sticky` now fills its column at 100% width by
+     design (see the R1c panel rules below), so re-capping it here would
+     silently undo P1 for exactly this band. The narrative-track/trigger
+     tightening above is unaffected and still applies. */
+}
+
+/* R1 item 6 (critic P1, 2026-09-08 19:00Z): claim (d) -- overlay-right's
+   narrative card offset far enough right to clear the hook/scrub charts'
+   Dec-2023 peak -- verified only at 1440 (card left 814 vs peak x=619/
+   614). At 1024 the SAME geometry (34rem-capped card, 5% outer margin)
+   put the card's left edge at 419 while the peak sits at x=440 -- the
+   climax the scene exists to reveal sits behind the card. Narrowing the
+   card (not widening the margin, which would push it toward the section
+   edge) buys back clearance without materially changing its reading
+   position. Scoped to `:has(.cr-chart-full)` so it only touches the
+   full-bleed live-chart overlay-right scenes (hook, scrub) -- not a
+   future overlay-right prose-only scene, which has no peak to clear. At
+   <=640px Closeread's own breakpoint forces overlay-center regardless of
+   this rule, and item 1's stack query covers the sidebar layouts
+   separately, so this band stops at 641px. */
+@media (min-width: 641px) and (max-width: 1439.98px) {
+  .cr-section.overlay-right:has(.cr-chart-full) .narrative-col {
+    --cr-narrative-overlay-max-width: 28rem;
+  }
+}
+
+/* R1 fix round 2 (G8 follow-on) -- SUPERSEDED by R1c. This used to centre-
+   then-right/left-align the chart CARD inside its column via margin-inline.
+   R1c's `.sticky` fills its column at width:100%/margin:0 by design (see
+   the R1c block below), which makes an inline margin nudge meaningless (a
+   0-width remainder can't be distributed) -- removed rather than left as a
+   dead rule two authors from now might "fix" back on. */
+
+/* R1 fix round 2 (G2, critic P1): at <=640px item 6's fix above doesn't
+   apply (its own comment: Closeread forces overlay-center below 641px
+   regardless), so the scrub scene's overlay narrative card falls back to
+   `margin-inline: auto` centering (Closeread's own <=575.98px mobile
+   rule, brand.css's own extension of it) -- as the reader scrolls through
+   the scrub trigger's tall padding zone, the card transits the FULL
+   viewport height, and at some settled positions it covers the pinned
+   chart's headline number (near the top of its drawing) AND its axes
+   (near the bottom) at once: `elementFromPoint` at the "11.0%" number's
+   own centre returned the card's `<p>`, on the scene called "Scrub the
+   headline print". Story.qmd marks the scrub scene (only -- NOT the hook,
+   which uses the same `.cr-chart-full`/overlay-right combination but has
+   no occlusion complaint and is closed by F1/F3, not reopened here)
+   `.cr-mat-bottom`.
+
+   Two approaches tried, in order:
+   (1) pin the CARD itself near the viewport's bottom edge via
+   `position:sticky` on `.narrative`, the same mechanic F3 uses for the
+   mobile chart band. Does NOT work here -- isolated by direct experiment
+   (a synthetic `<div class="trigger new-trigger">` with nothing else
+   inside it, no scrollama/OJS involved) that `position:sticky` never
+   clamps for ANY child of a real `.trigger` element on this page, sidebar
+   or overlay, template or story: the child tracks scroll 1:1 (slope -1)
+   through the ENTIRE range instead of clamping at its offset. Root cause
+   not found (not `.trigger`'s own CSS -- reproduced with fixed pixel
+   padding and `.cr-section` forced to `display:block`; not scrollama's
+   JS -- reproduced on a detached `cloneNode(true)` with no observer
+   attached). Flagging for design-critic / a future round rather than
+   shipping a rule that silently doesn't do what its own comment claims.
+   (2) top-align the CHART instead of moving the card -- closeread's own
+   `.sticky{margin:auto}` centres it vertically within the 100dvh sticky
+   area by default (symmetric ~305px clear margin above and below at
+   390x844); top-aligning it (`margin-block:0 auto`) turns that into a
+   single ~610px clear band below the chart. Measured: the card's OWN
+   natural (non-sticky, ordinary document flow) position when its trigger
+   is scrolled to viewport-centre (scrollama's own `offset:0.5` activation
+   point) has its top edge at ~253px -- already ~19px clear of the
+   top-aligned chart's own 234px-tall drawing, no card repositioning
+   needed at all once the chart moves out of the way. This is what
+   verify-r1f2.mjs actually proves; (1) is reverted, not shipped. */
+@media (max-width: 640px) {
+  /* closeread's own compiled selector for this rule is
+     `.cr-section .sticky-col .sticky-col-stack .sticky` -- FOUR classes
+     (0,4,0) -- higher specificity than a naive 3-class override here beats
+     by source order alone; `.cr-mat-bottom.cr-section` (compound, both on
+     the one scene div) plus the same descendant chain clears it. */
+  .cr-mat-bottom.cr-section .sticky-col .sticky-col-stack .sticky {
+    margin-block: 0 auto;
+  }
+}
+
+/* R1 fix round 2 (G2 continued): even with the occlusion above fixed (no
+   VISIBLE chart text sits under the card's own painted rect any more),
+   `elementFromPoint` at the big number's own centre still returned an
+   ancestor DIV, not the number underneath -- found by direct probe.
+   Root cause: overlay layouts give `.narrative-col` (which contains
+   `.trigger`, itself sometimes wrapped in a `.progress-block`) `z-index: 1`
+   over `.sticky-col` unconditionally (closeread's own overlay-left/-center/
+   -right rule), and these boxes' own height is the entire scroll-triggering
+   padding zone (`.trigger`'s `padding-block: 45svh`), not just the visible
+   card -- so the whole transparent padding area, at every ancestor level up
+   to `.narrative-col` itself, sits in front of the chart for hit-testing
+   purposes, card or no card. First pass (pointer-events:none on `.trigger`
+   alone) only stopped `.trigger` itself from being returned -- `.narrative-
+   col`/`.progress-block`, its OWN ancestors and just as large, still were.
+   `pointer-events:none` on the whole `.narrative-col` (covers every
+   descendant, `.progress-block` and `.trigger` included, in one rule) is
+   what actually clears it. Scoped to this scene only (`.cr-mat-bottom`);
+   `.narrative` itself (the actual card, including any links inside it)
+   keeps normal hit-testing via the `pointer-events: auto` re-enable below
+   it -- CSS `pointer-events:none` on an ancestor does not stop a
+   descendant from re-enabling its own. */
+.cr-mat-bottom .narrative-col {
+  pointer-events: none;
+}
+.cr-mat-bottom .trigger .narrative {
+  pointer-events: auto;
+}
+
+/* ============================================================
+   R1c -- the exhibit panel (SPEC.md closeread-engine, gap analysis
+   2026-09-09, three readers convergent: Fable, design-critic,
+   GPT-6 Astra all named the same first move). Ours: 13 sidebar
+   charts with 0 visible titles/captions/sources, drawn in a
+   640x434 card floating in a 100dvh column (svg 606x400 = 47% of
+   the reference's exhibit area, ~233px dead paper above and
+   below). Reference (raihankalla.id): a full-height sticky
+   visualization column with a continuous ground, one dividing
+   rule, consistent inset, title above, caption+source below.
+
+   Scoped to `.cr-section.sidebar-left`/`.sidebar-right` ONLY --
+   regimes + confidence, the two scenes this item names. Hook and
+   scrub use `overlay-*` layouts and `.cr-chart-full`, an entirely
+   different selector family; nothing below can reach them, which
+   is what keeps them on the DO-NOT-TOUCH list without an explicit
+   :not() exclusion anywhere. */
+
+/* -- P1: the ground moves from the `.sticky` CARD onto the
+   `.sticky-col-stack` COLUMN. closeread.scss stacks every `.sticky`
+   sibling on the SAME grid cell (`grid-area: 1 / 1`) and crossfades
+   opacity between them on trigger change (its own `.cr-active`
+   rule) -- painting the ground on each `.sticky` individually would
+   double-paint during a crossfade (two overlapping opaque rects,
+   different opacity) or, worse, gap during the transition where
+   neither has fully arrived. `.sticky-col-stack` never crossfades
+   -- it is the one constant element for the whole scene's scroll --
+   so it is the right place for a ground that has to survive every
+   sticky-swap. >=1024px only (P1's own stated range); the
+   641-1023.98 band (P4, edited above in the G1 rule) and <=640
+   already get this same treatment via that older rule, now upgraded
+   to match (48dvh, `--paper-deep`, hairline). Height is
+   `100dvh - var(--cr-kicker-h)`, not the bare 100dvh closeread's own
+   rule sets, so the panel starts right below the pinned kicker
+   (same offset F1/F3 already use) instead of running under it. */
+@media (min-width: 1024px) {
+  .cr-section.sidebar-left .sticky-col .sticky-col-stack,
+  .cr-section.sidebar-right .sticky-col .sticky-col-stack {
+    top: var(--cr-kicker-h);
+    height: calc(100dvh - var(--cr-kicker-h));
+    background: var(--paper-deep);
+  }
+  /* inner edge = the edge facing the narrative column. sidebar-left puts
+     narrative in grid-column 1 (left) and the sticky in column 2 (right)
+     -- inner edge is the sticky's LEFT edge. sidebar-right is the mirror:
+     narrative in column 2 (right), sticky in column 1 (left) -- inner
+     edge is the sticky's RIGHT edge. (closeread.scss `.sidebar-left`/
+     `.sidebar-right` grid-template-columns, confirmed by reading, not
+     assumed.) */
+  .cr-section.sidebar-left .sticky-col .sticky-col-stack {
+    border-left: 1px solid var(--hairline);
+  }
+  .cr-section.sidebar-right .sticky-col .sticky-col-stack {
+    border-right: 1px solid var(--hairline);
+  }
+}
+
+/* -- the panel itself: no card, no radius, fills the ground exactly, a
+   flex column for the title/chart/caption/source anatomy (P2). Scoped to
+   sidebar-left/-right at EVERY width, not just >=1024 -- P5 mirrors one
+   markup pattern into every breakpoint (the tablet/mobile band and the
+   desktop panel render the identical `.exhibit-*` structure); only the
+   GROUND's placement/height differs by breakpoint (the >=1024 rule above,
+   the <=1023.98 band rule further up this file), never the internal
+   anatomy. */
+.cr-section.sidebar-left .sticky-col-stack .sticky,
+.cr-section.sidebar-right .sticky-col-stack .sticky {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border-radius: 0;
+  padding: 1.1rem 1.25rem;
+  /* R1c fix2 (H1, critic P0): `.sticky` had no `position` of its own, so
+     each `offsetParent` chain for its .exhibit-* children skipped straight
+     past it to `.sticky-col-stack` (the nearest ANCESTOR that IS
+     positioned -- `position: sticky` counts) -- `neutralizeScaledChrome`
+     (story.qmd)'s offset walk, built to stop AT `.sticky`, never found it
+     in the chain and kept accumulating offsets past it, computing a
+     transform-origin hundreds of px off target (measured: 500-2000px of
+     "clip" that was really a wrong-origin overshoot, not the original
+     clipping bug). `position: relative` costs nothing visually (no
+     layout change, `.sticky` is still exactly where the grid/flex rules
+     above put it) and makes `.sticky` itself the offsetParent, which is
+     what the JS assumed. */
+  position: relative;
+}
+@media (min-width: 1024px) {
+  .cr-section.sidebar-left .sticky-col-stack .sticky,
+  .cr-section.sidebar-right .sticky-col-stack .sticky {
+    /* SPEC's own inset: ~2.5rem vertical / 3rem horizontal. */
+    padding: 2.5rem 3rem;
+  }
+}
+
+/* -- P2 anatomy. `.exhibit-title` (Space Grotesk, uppercase, hairline
+   under) -> `.exhibit-chart` (flex:1, fills whatever height title/
+   caption/source leave -- `min-height:0` is required, not decorative: a
+   flex item's default `min-height:auto` refuses to shrink below its own
+   content's intrinsic size, which would let a tall svg blow the panel
+   out instead of being sized BY it) -> `.exhibit-caption` (hairline
+   over) -> `.exhibit-source`. Direct series labels inside the svg stay;
+   no legend is added anywhere (SPEC What 2's own instruction, and the
+   reconciled gap-analysis note that the reference itself has only one
+   `.viz-legend` on the whole page). */
+.cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-title,
+.cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-title {
+  flex: none;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  color: var(--ink-soft);
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.9rem;
+  border-bottom: 1px solid var(--hairline);
+}
+.cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-chart,
+.cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-chart {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+}
+/* the OJS cell's returned svg lands inside a Quarto `.cell-output-display`
+   wrapper div, itself a child of `.exhibit-chart` -- not a direct svg
+   child. `.exhibit-chart{display:flex}` stretches that wrapper to fill
+   (flex's own default `align-items:stretch` on the cross axis), and the
+   `svg{width:100%;height:100%}` descendant selector below reaches through
+   it regardless of the extra nesting level, so it fills the wrapper the
+   same way the wrapper fills `.exhibit-chart`. */
+.cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-chart > *,
+.cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-chart > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  /* R1c fix2 (H1, critic P0): the VISIBLE half of the scale-by/pan-to fix
+     -- story.qmd's `neutralizeScaledChrome` cancels closeread.js's own
+     whole-sticky transform on .exhibit-title/-chart(box)/-caption/-source,
+     so this rule (on the CHART'S OWN inner content, not the box around it)
+     is the only place the authored zoom still renders. `--exhibit-scale`/
+     `--exhibit-pan-x`/`--exhibit-pan-y` are set once, inline, on the
+     `.exhibit-chart` div in the markup below (matched exactly to that
+     stage's `scale-by`/`pan-to`, the single source of truth
+     `neutralizeScaledChrome` also reads) -- every OTHER exhibit falls back
+     to 1/0%/0%, an identity transform, so this line is a no-op there.
+     `.exhibit-chart`'s own `overflow:hidden` (rule above) then crops the
+     zoom to the chart's own frame instead of the whole panel -- "cap the
+     scaled chart inside the panel", the critic's own alternative phrasing
+     for the same fix. */
+  transform: translate(var(--exhibit-pan-x, 0%), var(--exhibit-pan-y, 0%)) scale(var(--exhibit-scale, 1));
+  transform-origin: 50% 50%;
+}
+.cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-chart svg,
+.cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-chart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+/* static-image stickies (template's own placeholder scenes, or any real
+   story that has a raster/vector figure instead of a live OJS/d3 chart):
+   `object-fit: contain` keeps the image's own aspect ratio instead of the
+   svg rule's stretch-to-fill, which would distort a fixed-ratio raster. */
+.cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-chart img,
+.cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-chart img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0;
+}
+.cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-caption,
+.cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-caption {
+  flex: none;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  /* DESIGN.md token gate (design-builder step 9): 0.72rem is the one
+     documented sub-body type step (typography.caption). The panel anatomy
+     doesn't need a distinct caption size from the source line below it --
+     reusing the token here (was 0.78rem, an undocumented one-off) instead
+     of inventing a new ramp step for a distinction with no real reason
+     to exist. */
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--hairline);
+  /* R1c fix2 (critic P2, line-length x15, up to 111 chars/line): the
+     caption used to run the panel's full width as one unbroken line at
+     1440 (759px / 0.72rem Space Grotesk ~= 106 chars). 62ch matches
+     `.exhibit-source` below and the file's own body-measure convention
+     elsewhere. */
+  max-width: 62ch;
+}
+.cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-source,
+.cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-source {
+  flex: none;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  /* R1c fix2 (H5, critic P3): opacity .85 on --ink-soft over --paper-deep
+     blended to 4.64:1 -- AA-passing but only by ~3% margin, with no
+     collision-avoidance reason for the dim (the sweep is clean without
+     it). Dropped; the token alone is 6.60:1. */
+  max-width: 62ch;
+  margin-top: 0.35rem;
+}
+/* narrow band (<=1023.98px, P4): the fixed anatomy chrome (title border +
+   margins, caption border + margins, source margin) eats a larger share
+   of a much shorter 48dvh band than it does of the >=1024 full panel --
+   tighten the internal rhythm so the chart itself still gets most of the
+   available height. Measured, not guessed -- see the report's collision
+   sweep. */
+@media (max-width: 1023.98px) {
+  .cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-title,
+  .cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-title {
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.7rem;
+  }
+  .cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-caption,
+  .cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-caption {
+    margin-top: 0.4rem;
+    padding-top: 0.35rem;
+    /* DESIGN.md token gate: stays on the documented 0.72rem step (set on
+       the base rule above) at every width -- only the surrounding rhythm
+       (margin/padding/line-height) tightens for the narrow band, not the
+       type size itself. Was 0.68rem, a second undocumented one-off. */
+    line-height: 1.4;
+  }
+  .cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-source,
+  .cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-source {
+    margin-top: 0.2rem;
+    /* DESIGN.md token gate: stays on the documented 0.72rem step (base
+       rule) -- was 0.62rem, a third undocumented one-off with no
+       collision-avoidance reason to exist (the sweep is clean at every
+       width without it). */
+  }
+}
+/* R1c fix2 (H3, critic P1): "fold source into the caption's line below
+   640px". The two stay separate flex items (`.sticky`'s column flex
+   can't merge two elements onto one text line without a markup change
+   repeated across every exhibit -- the P5 anatomy this file keeps
+   defending), so this is the CSS-reachable version of the same
+   instruction: drop `.exhibit-source`'s own hairline-adjacent rhythm to
+   the smallest legible step so it reads as an attribution line trailing
+   the caption, not a third distinct chrome section, at the one width
+   (390) where the chrome/chart ratio was worst. */
+@media (max-width: 639.98px) {
+  .cr-section.sidebar-left .sticky-col-stack .sticky .exhibit-source,
+  .cr-section.sidebar-right .sticky-col-stack .sticky .exhibit-source {
+    margin-top: 0.15rem;
+    /* DESIGN.md token gate: 0.7rem, not a new one-off -- it's the SAME
+       value `.exhibit-title`'s own narrow-band rule (above) already uses,
+       reused rather than introducing a new distinct step (measured via
+       `impeccable detect`: a fresh 0.68rem added one genuinely NEW
+       design-system-font-size finding; 0.7rem adds none). */
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+}
