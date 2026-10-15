@@ -1,7 +1,7 @@
 {
   "title": "Replication package: Promise versus Delivery — The Fiscal Anchoring of Argentina's Disinflation under Milei, 2023-2026",
   "description": "<p>Replication repository for the working paper <em>Promise versus Delivery: The Fiscal Anchoring of Argentina's Disinflation under Milei, 2023-2026</em>. Python ingests and cleans; R analyses; outputs are Chart.js widgets, static PNG figures and regression tables.</p><p><strong>Data vintage locked 2026-06-13</strong> at the May 2026 CPI print (<code>vintage_end: 2026-05-31</code> in <code>config/params.yaml</code>). No observation after that date enters the panels, and the ingest scripts refuse to run while the vintage is locked. Every raw download is timestamped under <code>data-raw/{source}/{YYYY-MM-DD}/</code> and never overwritten; all published estimates are recomputed on this locked panel only. Raw downloads are not redistributed here — <code>make ingest</code> reconstructs them from the sources listed in <code>config/urls.yaml</code>.</p>",
-  "license": "cc-by-4.0",
+  "license": "MIT",
   "upload_type": "software",
   "access_right": "open",
   "creators": [

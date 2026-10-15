@@ -1,5 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this replication package, please cite the working paper."
+type: software
 title: "Replication package: Promise versus Delivery"
 authors:
   - family-names: Khosravipour
@@ -7,7 +8,8 @@ authors:
     email: nik@khosravipour.at
     affiliation: American Institute for Economic Research
     orcid: "https://orcid.org/0009-0007-4464-5002"
-license: CC-BY-4.0
+license: MIT
+url: "https://nikkhosravipour.com/assets/papers/dae618c21735d5da1bbfb0620c40a59c.pdf"
 repository-code: "https://github.com/nik110403/argentina-monetary-deepdive"
 preferred-citation:
   type: report

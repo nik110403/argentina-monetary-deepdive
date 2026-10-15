@@ -1,13 +1,27 @@
-# Argentina Monetary Deep Dive — Promise versus Delivery, 2023–2026
+<p><picture><source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg"><img src="assets/banner-light.svg" alt="Promise versus Delivery" width="100%"></picture></p>
 
-Replication repository for the working paper *Promise versus Delivery: The Fiscal
-Anchoring of Argentina's Disinflation under Milei, 2023–2026*
-([PDF](https://nikkhosravipour.com/assets/papers/dae618c21735d5da1bbfb0620c40a59c.pdf))
-and the deep dive
-[*Argentina's Monetary Report Card*](https://nikkhosravipour.com/post/argentinas-monetary-report-card-promise-versus-delivery-under-milei).
+**Monthly inflation fell from 25.5% in December 2023 to 2.1% in May 2026, and the parallel-market premium that averaged above 100% across 2022 and 2023 has averaged 1.4% under the regime in force since January 2026.**
 
-Section order follows the
-[Social Science Data Editors template README](https://github.com/social-science-data-editors/template_README).
+[Paper](https://nikkhosravipour.com/assets/papers/dae618c21735d5da1bbfb0620c40a59c.pdf) · [Deep dive](https://nikkhosravipour.com/post/argentinas-monetary-report-card-promise-versus-delivery-under-milei) · [Data](#data-availability) · [Site](https://nikkhosravipour.com)
+
+[![License: MIT](https://img.shields.io/badge/code-MIT-8c2f1b?style=flat)](LICENSE) [![License: CC BY 4.0](https://img.shields.io/badge/text%20and%20figures-CC%20BY%204.0-8c2f1b?style=flat)](LICENSE-docs) [![R 4.3.3](https://img.shields.io/badge/R-4.3.3-57534e?style=flat)](https://www.r-project.org/)
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="output/figures/fig02_inflation_phases-dark.png"><img src="output/figures/fig02_inflation_phases.png" alt="Line chart of monthly headline and core inflation, 2022 to May 2026, with the announced crawl or band rate. Headline inflation peaks at 25.5% in December 2023 and falls to 2.1% in May 2026." width="100%"></picture>
+
+This repository replicates the working paper *Promise versus Delivery: The Fiscal Anchoring of Argentina's Disinflation under Milei, 2023–2026* and the deep dive *Argentina's Monetary Report Card*. The figure shows monthly inflation and the exchange-rate rule (Figure 2 of the paper).
+
+> [!NOTE]
+> Runtime: `run_all.R` takes under 10 minutes on a laptop, single-threaded. R 4.3.3 and Python 3.12. Data vintage locked 2026-06-13 (May 2026 CPI print).
+
+## Quick start
+
+1. Clone: `git clone https://github.com/nik110403/argentina-monetary-deepdive.git && cd argentina-monetary-deepdive`
+2. Install the environments: `make deps` (Python venv from `python/requirements.txt`, then the R packages pinned in `renv.lock`).
+3. Rebuild the panels from the committed series in `data/`: `make panel`.
+4. Run the analysis: `make analysis` (same as `Rscript run_all.R`). Charts: `make charts`.
+5. Check the result: tables appear in `output/tables/`, figures in `output/figures/`, Chart.js widgets in `output/widgets/`.
+
+`make ingest` re-downloads the raw data, but it refuses to run while `vintage_locked: true` is set in `config/params.yaml`. See [Instructions to Replicators](#instructions-to-replicators) and [Data availability](#data-availability).
 
 ## Overview
 
@@ -17,7 +31,75 @@ mirrors the Taylor-rule deep dive repo so the two projects read as one research
 program. `make all` runs ingest through charts (see Instructions to Replicators
 below); `run_all.R` alone reproduces every table and figure listed in the paper.
 
-## Data Availability and Provenance Statements
+## Exhibit map
+
+Every entry of `run_all.R`'s `expected[]` vector, the script that writes it,
+and the paper exhibit it becomes. `R/09_export_charts.R` (Chart.js widgets)
+consumes the `output/data/*.rds` rows below but is not itself in `run_all.R`
+and is not repeated here.
+
+| output file | script | paper exhibit |
+|---|---|---|
+| output/tables/table1_phase_summary.md | R/01_descriptives.R | Table 1 — phase summary |
+| output/tables/table2_money_demand.md | R/02_money_demand.R | Table 2 — money demand |
+| output/tables/table2b_breakpoints.md | R/02_money_demand.R | Table 2b — Bai–Perron breakpoints |
+| output/tables/table2c_sensitivity.md | R/02_money_demand.R | Table 2c — sensitivity |
+| output/tables/table2d_slope_break.md | R/02_money_demand.R | Table 2d — slope-constancy break |
+| output/tables/table3_plateau.md | R/03_inertia.R | Table 3 — persistence plateau |
+| output/tables/table4_passthrough.md | R/04_passthrough.R | Table 4 — pass-through (appendix) |
+| output/tables/table5_events.md | R/05_events.R | Table 5 — event study |
+| output/tables/table_seigniorage.md | R/07_decomposition.R | Seigniorage table |
+| output/tables/table_remonetization.md | R/07_decomposition.R | Remonetization table |
+| output/tables/table_corridor.md | R/07_decomposition.R | Money-demand corridor table |
+| output/tables/table_dispersion.md | R/06_dispersion.R | Dispersion phase-mean table (descriptive; no chart) |
+| output/tables/table_durability.md | R/10_durability.R | §VI durability table |
+| output/tables/table_dsa.md | R/11_dsa.R | §VI DSA / required-rollover table |
+| output/data/fig01_decomposition.rds | R/07_decomposition.R | Fig 1 — base-money factor decomposition |
+| output/data/fig02_inflation.rds | R/01_descriptives.R | Fig 2 — inflation with phases and band-rate overlay |
+| output/data/fig03_gap.rds | R/01_descriptives.R | Fig 3 — daily parallel gap with event flags |
+| output/data/fig04_remonetization.rds | R/01_descriptives.R | Fig 4 — remonetization paths |
+| output/data/fig06_itcrm.rds | R/01_descriptives.R | Fig 6 — ITCRM |
+| output/data/fig07_reserves.rds | R/01_descriptives.R | Fig 7 — reserves, annotated |
+| output/data/fig08_comparative.rds | R/08_comparative.R | Fig 8 — aligned stabilization paths |
+| output/data/fig09_recursive.rds | R/02_money_demand.R | Fig 9 — recursive/rolling elasticity |
+| output/data/fig10_crisis.rds | R/05_events.R | Fig 10 — Sep–Oct 2025 crisis window (EMBI + gap) |
+| output/data/fig11_corridor.rds | R/07_decomposition.R | Fig 11 — base money vs money-demand corridor |
+| output/data/fig12_nir.rds | R/10_durability.R | Fig 12 — gross vs net international reserves |
+| output/data/fig13_unwind.rds | R/10_durability.R | Fig 13 — remunerated-liability unwind |
+| output/data/fig14_cover.rds | R/10_durability.R | Fig 14 — 2026-28 external maturity wall |
+| output/data/fig15_dsa.rds | R/11_dsa.R | Fig 15 — required rollover by NIR scenario |
+| output/figures/fig01_decomposition.png | R/07_decomposition.R | Fig 1 (PNG fallback) |
+| output/figures/fig02_inflation_phases.png | R/01_descriptives.R | Fig 2 (PNG fallback) |
+| output/figures/fig03_gap_events.png | R/01_descriptives.R | Fig 3 (PNG fallback) |
+| output/figures/fig04_remonetization.png | R/01_descriptives.R | Fig 4 (PNG fallback) |
+| output/figures/fig06_itcrm.png | R/01_descriptives.R | Fig 6 (PNG fallback) |
+| output/figures/fig07_reserves.png | R/01_descriptives.R | Fig 7 (PNG fallback) |
+| output/figures/fig08_comparative.png | R/08_comparative.R | Fig 8 (PNG fallback) |
+| output/figures/fig09_recursive_elasticity.png | R/02_money_demand.R | Fig 9 (PNG fallback) |
+| output/figures/fig10_embi_crisis.png | R/05_events.R | Fig 10 (PNG fallback) |
+| output/figures/fig11_corridor.png | R/07_decomposition.R | Fig 11 (PNG fallback) |
+| output/figures/fig12_nir.png | R/10_durability.R | Fig 12 (PNG fallback) |
+| output/figures/fig13_unwind.png | R/10_durability.R | Fig 13 (PNG fallback) |
+| output/figures/fig14_cover.png | R/10_durability.R | Fig 14 (PNG fallback) |
+| output/figures/fig15_dsa.png | R/11_dsa.R | Fig 15 (PNG fallback) |
+
+These are the final figure/table numbers referenced by both the paper and the
+deep dive embeds (file names match).
+
+## Data availability
+
+| Dataset | Source | Access | Included |
+|---|---|---|---|
+| Monetary aggregates, factors, reserves | BCRA Estadísticas API v4.0 | Public API | cleaned series in `data/`; raw no |
+| Consumer prices, division weights | INDEC | Public download | cleaned series in `data/`; raw no |
+| Fiscal series, nominal GDP | datos.gob.ar Series de Tiempo | Open-data API | cleaned series in `data/`; raw no |
+| Real exchange rate (ITCRM), REM expectations | BCRA | Public download | cleaned series in `data/`; raw no |
+| Parallel dollar | Bluelytics | Free JSON API, terms not documented | cleaned series in `data/`; raw no |
+| EMBI, MEP, CCL | Ámbito Financiero | Semi-official endpoint, terms not documented | cleaned series in `data/`; raw no |
+| Israel and US CPI | FRED | Keyless CSV | cleaned series in `data/`; raw no |
+| Brazil IPCA | BCB SGS | Open API | cleaned series in `data/`; raw no |
+
+The licences in this repository (MIT for code, CC BY 4.0 for text and figures) do not cover third-party data. Each provider's own terms apply to its series.
 
 **VINTAGE LOCKED 2026-06-13** at the May 2026 CPI print (`vintage_end:
 2026-05-31` in `config/params.yaml`). No observation after that date enters the
@@ -25,12 +107,14 @@ panels, and the ingest scripts refuse to run while `vintage_locked: true`. Every
 raw download is timestamped under `data-raw/{source}/{YYYY-MM-DD}/` and never
 overwritten. All published estimates are recomputed on this locked panel only.
 
-`data-raw/` is **gitignored** — none of the raw provider files ship in this
-package. `data-raw/MANIFEST.sha256` records the sha256 of every raw file at the
+`data-raw/` is **gitignored**: none of the raw provider files ship in this
+package. The cleaned, tidy series that `python/ingest_*.py` write to `data/`
+and the panels built from them are committed, so `make panel` and `make analysis`
+run without re-downloading. `data-raw/MANIFEST.sha256` records the sha256 of every raw file at the
 locked vintage so a replicator who re-downloads from the URLs below can verify
 they match what the published results were computed on.
 
-All seven sources below are secondary data: none were generated by the authors.
+All sources below are secondary data: none were generated by the authors.
 
 ### Statement about Rights
 
@@ -38,18 +122,23 @@ The data are drawn from public statistical APIs and public/semi-official web
 endpoints of the Argentine central bank, the national statistics institute,
 the national open-data portal, and financial media. No confidential, licensed,
 or human-subjects data are used. No redistribution rights beyond linking to the
-original source are claimed for any raw file (none are provided — see above).
+original source are claimed for any raw file (none are provided; see above).
+The cleaned series in `data/` are derived from those sources and stay subject
+to each provider's terms. The Bluelytics and Ámbito/EMBI series carry no
+documented open licence; the code licence does not extend to them.
 
 ### (Optional, but recommended) License for Data
 
 Source data is public (BCRA, INDEC, datos.gob.ar, FRED, BCB, and others) and
-remains subject to each provider's own terms; none of it is redistributed in
-this package (see Details on each Data Source below).
+remains subject to each provider's own terms. No raw provider file is
+redistributed in this package; `data/` holds cleaned series derived from them
+(see Details on each Data Source below).
 
 ### Summary of Availability
 
-All data **are** publicly available at the URLs below; none are provided as
-files in this package (see `data-raw/MANIFEST.sha256` for fixity).
+All data **are** publicly available at the URLs below; no raw provider files
+are provided in this package (see `data-raw/MANIFEST.sha256` for fixity).
+Cleaned series are in `data/`.
 
 ### Details on each Data Source
 
@@ -58,7 +147,7 @@ Keys match `config/urls.yaml`.
 #### BCRA Estadísticas v4.0 (`bcra_api_base`)
 
 - Provider: Banco Central de la República Argentina (BCRA)
-- URL: https://api.bcra.gob.ar (Estadísticas API v4.0 — v3.0 was deprecated,
+- URL: <https://api.bcra.gob.ar> (Estadísticas API v4.0 — v3.0 was deprecated,
   HTTP 410, in June 2026; see `python/ingest_bcra.py`)
 - Access date: `data-raw/bcra/2026-06-13/`
 - Licence/terms: public statistical API published by Argentina's central bank;
@@ -69,7 +158,7 @@ Keys match `config/urls.yaml`.
 #### INDEC (`indec`)
 
 - Provider: Instituto Nacional de Estadística y Censos (INDEC)
-- URL: https://www.indec.gob.ar/Nivel4/Tema/3/5/31 (IPC cuadros; direct `.xls`
+- URL: <https://www.indec.gob.ar/Nivel4/Tema/3/5/31> (IPC cuadros; direct `.xls`
   link scraped per month, see `config/urls.yaml:indec`)
 - Access date: `data-raw/indec/2026-06-13/`
 - Licence/terms: official Argentine national statistics; publicly downloadable
@@ -81,8 +170,8 @@ Keys match `config/urls.yaml`.
 
 - Provider: Argentina's national open-data portal (Series de Tiempo API), used
   for fiscal series and nominal GDP (see `python/ingest_fiscal.py`)
-- URL: https://apis.datos.gob.ar/series/api/series (search:
-  https://apis.datos.gob.ar/series/api/search)
+- URL: <https://apis.datos.gob.ar/series/api/series> (search:
+  <https://apis.datos.gob.ar/series/api/search>)
 - Access date: `data-raw/fiscal/2026-06-13/`
 - Licence/terms: published under Argentina's open government data policy —
   see the portal for its terms of use.
@@ -92,7 +181,7 @@ Keys match `config/urls.yaml`.
 #### ITCRM (`itcrm`)
 
 - Provider: BCRA — Índice de Tipo de Cambio Real Multilateral
-- URL: https://www.bcra.gob.ar/Pdfs/PublicacionesEstadisticas/ITCRMSerie.xlsx
+- URL: <https://www.bcra.gob.ar/Pdfs/PublicacionesEstadisticas/ITCRMSerie.xlsx>
 - Access date: `data-raw/itcrm/2026-06-13/`
 - Licence/terms: public statistical series published by BCRA — see the
   provider site for its terms of use.
@@ -102,7 +191,7 @@ Keys match `config/urls.yaml`.
 #### REM (`rem`)
 
 - Provider: BCRA — Relevamiento de Expectativas de Mercado
-- URL: https://www.bcra.gob.ar/PublicacionesEstadisticas/Relevamiento_Expectativas_de_Mercado.asp
+- URL: <https://www.bcra.gob.ar/PublicacionesEstadisticas/Relevamiento_Expectativas_de_Mercado.asp>
   (xlsx database scraped per `config/urls.yaml:rem`)
 - Access date: `data-raw/rem/2026-06-13/`
 - Licence/terms: public statistical survey published by BCRA — see the
@@ -113,7 +202,7 @@ Keys match `config/urls.yaml`.
 #### Bluelytics (`bluelytics`)
 
 - Provider: Bluelytics (parallel/"blue" exchange-rate aggregator)
-- URL: https://api.bluelytics.com.ar/v2/evolution.json
+- URL: <https://api.bluelytics.com.ar/v2/evolution.json>
 - Access date: `data-raw/bluelytics/2026-06-13/`
 - Licence/terms: free public JSON API — see the provider site for its terms of
   use.
@@ -124,7 +213,7 @@ Keys match `config/urls.yaml`.
 
 - Provider: Ámbito Financiero (financial media) — EMBI Argentina, MEP and CCL
   dollar series
-- URL: https://mercados.ambito.com/riesgopais/historico-general/{start}/{end}
+- URL: <https://mercados.ambito.com/riesgopais/historico-general/{start}/{end}>
   (and the `mep`/`ccl` endpoints in `config/urls.yaml:ambito`)
 - Access date: `data-raw/ambito/2026-06-13/`
 - Licence/terms: semi-official financial-media endpoint, not a documented
@@ -141,7 +230,7 @@ retired in 2025.
 #### FRED (`fredgraph`)
 
 - Provider: Federal Reserve Bank of St. Louis (FRED)
-- URL: https://fred.stlouisfed.org/graph/fredgraph.csv (keyless CSV endpoint;
+- URL: <https://fred.stlouisfed.org/graph/fredgraph.csv> (keyless CSV endpoint;
   series `ISRCPIALLMINMEI` — Israel CPI, monthly — and `CPIAUCSL` — US CPI)
 - Access date: `data-raw/comparators/2026-06-13/`
 - Licence/terms: FRED-redistributed OECD MEI / BLS data — see the provider
@@ -153,13 +242,34 @@ retired in 2025.
 
 - Provider: Banco Central do Brasil — Sistema Gerenciador de Séries Temporais
   (SGS) open API
-- URL: https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados (no key;
+- URL: <https://api.bcb.gov.br/dados/serie/bcdata.sgs.{code}/dados> (no key;
   series 433 — IPCA, monthly % variation)
 - Access date: `data-raw/comparators/2026-06-13/`
 - Licence/terms: open public API — see the provider site for its terms of
   use.
 - Provided in package: no (`data-raw/` gitignored); fixity in
   `data-raw/MANIFEST.sha256`
+
+## Repository layout
+
+```text
+argentina-monetary-deepdive/
+├── run_all.R          # R modules 01-11 in order, then checks the expected outputs
+├── Makefile           # deps, ingest, panel, analysis, charts
+├── renv.lock          # pinned R packages
+├── python/            # ingest scripts, build_panel.py, requirements.txt
+├── R/                 # numbered analysis scripts 00-12
+├── config/            # params, source URLs, series IDs, event registry
+├── data-raw/          # MANIFEST.sha256 only; raw downloads are gitignored
+├── data/              # cleaned series and monthly/daily panels
+├── output/
+│   ├── figures/       # PNG figures
+│   ├── tables/        # markdown and HTML tables
+│   └── widgets/       # Chart.js HTML widgets
+├── story/             # scene code for the interactive story
+├── assets/            # banner and social preview (made by tools/banner)
+└── CITATION.cff
+```
 
 ## Computational requirements
 
@@ -186,12 +296,11 @@ retired in 2025.
   shifting by one column-character with every numeric cell value unchanged.
   Root cause is text/table rendering non-determinism in the plotting and
   `modelsummary` calls (`R/01_descriptives.R` onward), not the analysis —
-  outside this item's scope to fix. No published number changed on any
+  not fixed here. No published number changed on any
   recompute; only cosmetic rendering bytes did. The committed `output/`
   artifacts in this repo are therefore the versions as originally rendered,
   restored after each verification recompute; this pipeline is not fully
-  bit-reproducible for figure/table rendering, and no further recompute
-  happens without sign-off.
+  bit-reproducible for figure/table rendering.
 - `lpirfs` is optional: it provides only a full-sample packaged cross-check
   of the pass-through local projections (`R/04_passthrough.R`), not the
   primary estimates. On the analysis host it was not installed, so that
@@ -242,10 +351,9 @@ other module uses a pseudo-random generator.
 | `R/11_dsa.R` | debt-sustainability stress: GFN vs NIR accumulation, required rollover (fig 15, DSA table) |
 | `R/12_referee_strengthening.R` | referee-response robustness on the locked panel (run on demand; not part of `run_all.R`) |
 
-### (Optional, but recommended) License for Code
+### License for code
 
-The code and generated figures in this repository are licensed under
-[CC BY 4.0](LICENSE) — reuse with attribution.
+The code is licensed under [MIT](LICENSE). Text and figures are licensed under [CC BY 4.0](LICENSE-docs).
 
 ## Instructions to Replicators
 
@@ -300,57 +408,24 @@ column. Every date in the published piece must trace to a primary document.
 before publication** — the dispersion measure renormalizes them to sum to
 one, so small errors do not propagate, but the cited values must be exact.
 
-## List of tables, figures and programs
+## Citation
 
-Every entry of `run_all.R`'s `expected[]` vector, the script that writes it,
-and the paper exhibit it becomes. `R/09_export_charts.R` (Chart.js widgets)
-consumes the `output/data/*.rds` rows below but is not itself in `run_all.R`
-and is not repeated here.
+GitHub shows a "Cite this repository" button from `CITATION.cff`. BibTeX:
 
-| output file | script | paper exhibit |
-|---|---|---|
-| output/tables/table1_phase_summary.md | R/01_descriptives.R | Table 1 — phase summary |
-| output/tables/table2_money_demand.md | R/02_money_demand.R | Table 2 — money demand |
-| output/tables/table2b_breakpoints.md | R/02_money_demand.R | Table 2b — Bai–Perron breakpoints |
-| output/tables/table2c_sensitivity.md | R/02_money_demand.R | Table 2c — sensitivity |
-| output/tables/table2d_slope_break.md | R/02_money_demand.R | Table 2d — slope-constancy break |
-| output/tables/table3_plateau.md | R/03_inertia.R | Table 3 — persistence plateau |
-| output/tables/table4_passthrough.md | R/04_passthrough.R | Table 4 — pass-through (appendix) |
-| output/tables/table5_events.md | R/05_events.R | Table 5 — event study |
-| output/tables/table_seigniorage.md | R/07_decomposition.R | Seigniorage table |
-| output/tables/table_remonetization.md | R/07_decomposition.R | Remonetization table |
-| output/tables/table_corridor.md | R/07_decomposition.R | Money-demand corridor table |
-| output/tables/table_dispersion.md | R/06_dispersion.R | Dispersion phase-mean table (descriptive; no chart) |
-| output/tables/table_durability.md | R/10_durability.R | §VI durability table |
-| output/tables/table_dsa.md | R/11_dsa.R | §VI DSA / required-rollover table |
-| output/data/fig01_decomposition.rds | R/07_decomposition.R | Fig 1 — base-money factor decomposition |
-| output/data/fig02_inflation.rds | R/01_descriptives.R | Fig 2 — inflation with phases and band-rate overlay |
-| output/data/fig03_gap.rds | R/01_descriptives.R | Fig 3 — daily parallel gap with event flags |
-| output/data/fig04_remonetization.rds | R/01_descriptives.R | Fig 4 — remonetization paths |
-| output/data/fig06_itcrm.rds | R/01_descriptives.R | Fig 6 — ITCRM |
-| output/data/fig07_reserves.rds | R/01_descriptives.R | Fig 7 — reserves, annotated |
-| output/data/fig08_comparative.rds | R/08_comparative.R | Fig 8 — aligned stabilization paths |
-| output/data/fig09_recursive.rds | R/02_money_demand.R | Fig 9 — recursive/rolling elasticity |
-| output/data/fig10_crisis.rds | R/05_events.R | Fig 10 — Sep–Oct 2025 crisis window (EMBI + gap) |
-| output/data/fig11_corridor.rds | R/07_decomposition.R | Fig 11 — base money vs money-demand corridor |
-| output/data/fig12_nir.rds | R/10_durability.R | Fig 12 — gross vs net international reserves |
-| output/data/fig13_unwind.rds | R/10_durability.R | Fig 13 — remunerated-liability unwind |
-| output/data/fig14_cover.rds | R/10_durability.R | Fig 14 — 2026-28 external maturity wall |
-| output/data/fig15_dsa.rds | R/11_dsa.R | Fig 15 — required rollover by NIR scenario |
-| output/figures/fig01_decomposition.png | R/07_decomposition.R | Fig 1 (PNG fallback) |
-| output/figures/fig02_inflation_phases.png | R/01_descriptives.R | Fig 2 (PNG fallback) |
-| output/figures/fig03_gap_events.png | R/01_descriptives.R | Fig 3 (PNG fallback) |
-| output/figures/fig04_remonetization.png | R/01_descriptives.R | Fig 4 (PNG fallback) |
-| output/figures/fig06_itcrm.png | R/01_descriptives.R | Fig 6 (PNG fallback) |
-| output/figures/fig07_reserves.png | R/01_descriptives.R | Fig 7 (PNG fallback) |
-| output/figures/fig08_comparative.png | R/08_comparative.R | Fig 8 (PNG fallback) |
-| output/figures/fig09_recursive_elasticity.png | R/02_money_demand.R | Fig 9 (PNG fallback) |
-| output/figures/fig10_embi_crisis.png | R/05_events.R | Fig 10 (PNG fallback) |
-| output/figures/fig11_corridor.png | R/07_decomposition.R | Fig 11 (PNG fallback) |
-| output/figures/fig12_nir.png | R/10_durability.R | Fig 12 (PNG fallback) |
-| output/figures/fig13_unwind.png | R/10_durability.R | Fig 13 (PNG fallback) |
-| output/figures/fig14_cover.png | R/10_durability.R | Fig 14 (PNG fallback) |
-| output/figures/fig15_dsa.png | R/11_dsa.R | Fig 15 (PNG fallback) |
+<details>
+<summary>BibTeX</summary>
 
-These are the final figure/table numbers referenced by both the paper and the
-deep dive embeds (file names match); nothing here is provisional.
+```bibtex
+@misc{argentina_monetary_deepdive2026,
+  author = {Khosravipour, Nik},
+  title  = {Promise versus Delivery: The Fiscal Anchoring of Argentina's Disinflation under Milei, 2023--2026},
+  year   = {2026},
+  url    = {https://github.com/nik110403/argentina-monetary-deepdive}
+}
+```
+
+</details>
+
+## License
+
+Code: [MIT](LICENSE). Text and figures: [CC BY 4.0](LICENSE-docs).
